@@ -26,7 +26,7 @@
     }
   },
   "data": {
-    "name": "data-7aadd5eec412fdfa64ca29ea8c4af94b"
+    "name": "data-8d1e0d32500846c2b4d4adfe9f4e2ddc"
   },
   "facet": {
     "column": {
@@ -94,7 +94,7 @@
   "title": "Per-Experiment Cost vs Pass Rate by Tier",
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-7aadd5eec412fdfa64ca29ea8c4af94b": [
+    "data-8d1e0d32500846c2b4d4adfe9f4e2ddc": [
       {
         "experiment": "test-001",
         "tier": "T0",
@@ -116,26 +116,26 @@
       {
         "experiment": "test-001",
         "tier": "T3",
-        "mean_cost": 0.03799735081300813,
-        "pass_rate": 0.34959349593495936
+        "mean_cost": 0.041451277235772355,
+        "pass_rate": 1.0
       },
       {
         "experiment": "test-001",
         "tier": "T4",
-        "mean_cost": 0.0384721880952381,
-        "pass_rate": 0.0
+        "mean_cost": 0.04423016547619048,
+        "pass_rate": 1.0
       },
       {
         "experiment": "test-001",
         "tier": "T5",
-        "mean_cost": 0.037710759999999996,
-        "pass_rate": 0.0
+        "mean_cost": 0.04247158,
+        "pass_rate": 1.0
       },
       {
         "experiment": "test-001",
         "tier": "T6",
-        "mean_cost": 0.07036548333333334,
-        "pass_rate": 0.0
+        "mean_cost": 0.10615335,
+        "pass_rate": 1.0
       },
       {
         "experiment": "test-002",

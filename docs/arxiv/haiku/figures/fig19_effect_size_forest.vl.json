@@ -48,7 +48,7 @@
     },
     {
       "data": {
-        "name": "data-06a8d466beed9b7d8ca8fd63de488c60"
+        "name": "data-48333e89aea57681231fdd357280ec5a"
       },
       "mark": {
         "type": "errorbar"
@@ -88,7 +88,7 @@
     },
     {
       "data": {
-        "name": "data-06a8d466beed9b7d8ca8fd63de488c60"
+        "name": "data-48333e89aea57681231fdd357280ec5a"
       },
       "mark": {
         "type": "circle",
@@ -177,7 +177,7 @@
         "x": 0
       }
     ],
-    "data-06a8d466beed9b7d8ca8fd63de488c60": [
+    "data-48333e89aea57681231fdd357280ec5a": [
       {
         "agent_model": "claude-haiku-4-5",
         "transition": "T0\u2192T1",
@@ -203,20 +203,20 @@
         "transition": "T2\u2192T3",
         "tier1": "T2",
         "tier2": "T3",
-        "delta": -0.21897018970189702,
-        "ci_low": -0.2682926829268293,
-        "ci_high": -0.16820234869015355,
-        "significant": "Yes"
+        "delta": -0.002168021680216802,
+        "ci_low": -0.02710027100271003,
+        "ci_high": 0.035591689250225836,
+        "significant": "No"
       },
       {
         "agent_model": "claude-haiku-4-5",
         "transition": "T3\u2192T4",
         "tier1": "T3",
         "tier2": "T4",
-        "delta": -0.1159504452187379,
-        "ci_low": -0.21232837027993734,
-        "ci_high": -0.02338610668671478,
-        "significant": "Yes"
+        "delta": 0.0005807200929152149,
+        "ci_low": -0.03948896631823461,
+        "ci_high": 0.024583817266744093,
+        "significant": "No"
       },
       {
         "agent_model": "claude-haiku-4-5",
@@ -224,8 +224,8 @@
         "tier1": "T4",
         "tier2": "T5",
         "delta": -0.013227513227513227,
-        "ci_low": -0.12804232804232804,
-        "ci_high": 0.10793650793650794,
+        "ci_low": -0.05767195767195767,
+        "ci_high": 0.025925925925925925,
         "significant": "No"
       },
       {
@@ -234,9 +234,9 @@
         "tier1": "T5",
         "tier2": "T6",
         "delta": 0.037037037037037035,
-        "ci_low": -0.3333333333333333,
-        "ci_high": 0.3111111111111111,
-        "significant": "No"
+        "ci_low": 0.014814814814814815,
+        "ci_high": 0.08148148148148149,
+        "significant": "Yes"
       }
     ]
   }

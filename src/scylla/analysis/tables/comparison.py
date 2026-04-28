@@ -245,7 +245,7 @@ def _generate_pairwise_comparison(  # noqa: C901  # pairwise comparison with man
     for _, row in df.iterrows():
         cliffs_delta_val = row["Cliff's δ"]
         n_str = f"({row['N1']}, {row['N2']})"
-        pval_str = f"{row['p-value']:{_FMT_PVAL}}" if row["p-value"] is not None else "—"
+        pval_str = f"{row['p-value']:{_FMT_PVAL}}" if pd.notna(row["p-value"]) else "—"
         power_val = row["Power"]
         power_str = f"{power_val:.3f}" if not math.isnan(power_val) else "—"
 
@@ -273,7 +273,7 @@ def _generate_pairwise_comparison(  # noqa: C901  # pairwise comparison with man
         sig_mark = r"\checkmark" if row["Significant"] == "Yes" else ""
         cliffs_delta_val = row["Cliff's δ"]
         n_str = f"({row['N1']}, {row['N2']})"
-        pval_str = f"{row['p-value']:{_FMT_PVAL}}" if row["p-value"] is not None else "---"
+        pval_str = f"{row['p-value']:{_FMT_PVAL}}" if pd.notna(row["p-value"]) else "---"
         power_val = row["Power"]
         power_str = f"{power_val:.3f}" if not math.isnan(power_val) else "---"
 
@@ -792,7 +792,7 @@ def table06_model_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
             val1_str = f"{row[model1]:.3f}" if isinstance(row[model1], float) else str(row[model1])
             val2_str = f"{row[model2]:.3f}" if isinstance(row[model2], float) else str(row[model2])
             delta_str = f"{row['Δ']:+.3f}" if isinstance(row["Δ"], float) else str(row["Δ"])
-            pval_str = f"{row['p-value']:{_FMT_PVAL}}" if row["p-value"] is not None else "—"
+            pval_str = f"{row['p-value']:{_FMT_PVAL}}" if pd.notna(row["p-value"]) else "—"
 
             md_lines.append(
                 f"| {row['Metric']} | {val1_str} | {val2_str} | {delta_str} | {pval_str} |"
@@ -810,7 +810,7 @@ def table06_model_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
             val1_str = f"{row[model1]:.3f}" if isinstance(row[model1], float) else str(row[model1])
             val2_str = f"{row[model2]:.3f}" if isinstance(row[model2], float) else str(row[model2])
             delta_str = f"{row['Δ']:+.3f}" if isinstance(row["Δ"], float) else str(row["Δ"])
-            pval_str = f"{row['p-value']:{_FMT_PVAL}}" if row["p-value"] is not None else "—"
+            pval_str = f"{row['p-value']:{_FMT_PVAL}}" if pd.notna(row["p-value"]) else "—"
 
             md_lines.append(
                 f"| {row['Pair']} | {row['Metric']} | {val1_str} | {val2_str} | "
@@ -842,7 +842,7 @@ def table06_model_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
             val1_str = f"{row[model1]:.3f}" if isinstance(row[model1], float) else str(row[model1])
             val2_str = f"{row[model2]:.3f}" if isinstance(row[model2], float) else str(row[model2])
             delta_str = f"{row['Δ']:+.3f}" if isinstance(row["Δ"], float) else str(row["Δ"])
-            pval_str = f"{row['p-value']:{_FMT_PVAL}}" if row["p-value"] is not None else "---"
+            pval_str = f"{row['p-value']:{_FMT_PVAL}}" if pd.notna(row["p-value"]) else "---"
 
             latex_lines.append(
                 f"{row['Metric']} & {val1_str} & {val2_str} & {delta_str} & {pval_str} \\\\"
@@ -864,7 +864,7 @@ def table06_model_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
             val1_str = f"{row[model1]:.3f}" if isinstance(row[model1], float) else str(row[model1])
             val2_str = f"{row[model2]:.3f}" if isinstance(row[model2], float) else str(row[model2])
             delta_str = f"{row['Δ']:+.3f}" if isinstance(row["Δ"], float) else str(row["Δ"])
-            pval_str = f"{row['p-value']:{_FMT_PVAL}}" if row["p-value"] is not None else "---"
+            pval_str = f"{row['p-value']:{_FMT_PVAL}}" if pd.notna(row["p-value"]) else "---"
 
             latex_lines.append(
                 f"{row['Pair']} & {row['Metric']} & {val1_str} & {val2_str} & "

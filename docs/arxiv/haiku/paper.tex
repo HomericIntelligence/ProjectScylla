@@ -54,7 +54,9 @@
 \title{Navigating Scylla with Haiku:\\Multi-Task Evaluation of Agentic Coding Architectures\\Using a Budget Frontier Model}
 
 \author{
-  Micah Villmow \\
+  Micah Villmow\thanks{This paper combines the author's original research
+  and writing with improvements, suggestions, and rewrites provided by
+  Claude Code (claude.ai/code).} \\
   \texttt{research@villmow.us}
 }
 
@@ -76,25 +78,24 @@ decomposes agent architecture into seven tiers of increasing complexity
 (T0--T6) and measures quality and cost across a structured set of 120 YAML
 subtests. Using \texttt{claude-haiku-4-5}, Anthropic's budget frontier model,
 we execute three multi-task experiments totaling 1,080 runs at a cost of
-\$122.31. Our results reveal a striking non-monotonic relationship between
-architectural complexity and task performance: the simplest tiers (T0--T2)
-achieve the highest aggregate pass rates (0.935--0.978), while delegation-based
-tiers (T3--T6) exhibit statistically significant degradation (pass rate
-0.630--0.759; Kruskal--Wallis on pass rate, $H(6)=119.01$, $p<0.001$). The transition from
-T2 to T3 constitutes a sharp, statistically significant performance drop (Cliff's $\delta=-0.219$, $p<0.001$).
-A Scheirer--Ray--Hare analysis reveals a significant tier $\times$ task
-interaction on score ($H(12)=223.5$, $p<0.001$), indicating that the optimal architectural
-tier is task-dependent. Notably, cost does not vary significantly across tiers
-($p=0.676$, non-significant under limited power), providing no evidence of
-cost savings from additional architectural complexity despite substantial
-quality penalties. Inter-rater reliability among the
-three-judge panel (Krippendorff's $\alpha=-0.030$) is below chance agreement,
-raising concerns about the reliability of LLM-as-judge panels that include
-budget-class evaluators. These preliminary
-findings suggest that for budget models, simpler architectures outperform
-complex ones in aggregate, though task-dependent effects are strong and
-architectural decisions should be task-contingent rather than universally
-applied.
+\$123.30. Contrary to initial expectations, our results show no significant
+relationship between architectural complexity and aggregate task performance:
+all seven tiers achieve high pass rates in the range 0.935--1.000
+(T0\,=\,0.935, T1\,=\,0.967, T2\,=\,0.978, T3\,=\,0.976, T4\,=\,0.976,
+T5\,=\,0.963, T6\,=\,1.000), and a Kruskal--Wallis omnibus test on pass rate
+is not significant ($H(6)=8.53$, $p=0.2015$). However, a
+Scheirer--Ray--Hare analysis reveals a significant tier $\times$ task
+interaction on quality score ($H(12)=223.5$, $p<0.001$), indicating that the
+optimal architectural tier is task-dependent even when aggregate pass rates are
+equivalent. Cost does not vary significantly across tiers ($p=0.676$),
+providing no evidence that additional architectural complexity yields economic
+benefits or penalties at this model scale. Inter-rater reliability among the
+three-judge panel remains poor (Krippendorff's $\alpha=0.034$), raising
+concerns about the reliability of LLM-as-judge panels that include
+budget-class evaluators. These preliminary findings suggest that for budget
+frontier models, architectural tier selection has negligible effect on
+aggregate pass rate, but task difficulty and judge reliability are substantial
+sources of variance that dominate architectural effects.
 \end{abstract}
 
 \textbf{Keywords:} agentic AI, ablation study, LLM evaluation, budget models,
@@ -117,18 +118,18 @@ layers actually improve performance, and at what cost?}
 This question is especially acute for budget-class models. While frontier
 models such as Claude Opus or GPT-4 may possess sufficient capacity to benefit
 from complex architectures, smaller models may lack the reasoning bandwidth to
-exploit---or even tolerate---the overhead of delegation and orchestration. A
-complex architecture that helps a frontier model may actively harm a budget
-model, yet the interaction between model capacity and architectural complexity
-remains largely unexplored in the existing literature.
+exploit---or even tolerate---the overhead of delegation and orchestration.
+Whether architectural complexity helps, hinders, or has no effect on a budget
+model is an empirical question, yet the interaction between model capacity and
+architectural complexity remains largely unexplored in the existing literature.
 
 The stakes are practical. Organizations deploying agentic coding systems face
 real economic trade-offs: budget models cost substantially less per token than
-frontier models, but if they require simpler architectures to function
-effectively, then the savings from cheaper models may be offset by reduced
-capability. Conversely, if budget models perform well with minimal
-architecture, then significant cost savings are achievable without sacrificing
-quality---provided the architecture is matched to the model's capacity.
+frontier models, but it is unknown whether layering additional architectural
+complexity onto a budget model provides any measurable benefit. If
+architectural tier has negligible impact on pass rate---as our results
+suggest---then practitioners can safely deploy the simplest viable
+architecture, reducing operational complexity without sacrificing quality.
 
 Existing benchmarks such as SWE-bench~\cite{jimenez2024swebench},
 AgentBench~\cite{liu2023agentbench}, and TAU-bench~\cite{yao2024taubench}
@@ -152,7 +153,7 @@ In this paper, we extend the Scylla framework to a budget frontier model
 (\texttt{claude-haiku-4-5}) and a multi-task evaluation across three
 experiments of varying difficulty. We execute all 120 subtests across all seven
 tiers with $N=3$ replications per subtest, producing 1,080 total runs at a
-total cost of \$122.31. This design enables us to address the following
+total cost of \$123.30. This design enables us to address the following
 research questions:
 
 \begin{description}
@@ -172,20 +173,23 @@ Our contributions are as follows:
 
 \begin{enumerate}
   \item We provide, to our knowledge, the first multi-task ablation study of
-    agentic coding architectures using a budget frontier model, providing
-    preliminary evidence
-    that architectural complexity has a non-monotonic and task-dependent effect
-    on performance.
-  \item We identify the T2--T3 transition as a sharp degradation point where
-    delegation-based architectures produce statistically significant
-    degradation in pass rate (Cliff's $\delta = -0.219$, $p < 0.001$).
+    agentic coding architectures using a budget frontier model, finding that
+    architectural tier has no statistically significant effect on aggregate
+    pass rate ($H(6)=8.53$, $p=0.2015$), with all tiers achieving pass rates
+    between 0.935 and 1.000.
+  \item We show that task-dependent effects dominate architectural effects:
+    a Scheirer--Ray--Hare analysis reveals a significant tier $\times$ task
+    interaction on quality score ($H(12)=223.5$, $p<0.001$), indicating that
+    architectural decisions should be task-contingent rather than universally
+    applied.
   \item We find no statistically significant tier effect on cost ($p=0.676$),
-    providing no evidence of offsetting cost savings under current statistical
-    power.
-  \item We report near-zero inter-rater reliability (Krippendorff's $\alpha=-0.030$~\cite{krippendorff2004content}) among a
+    providing no evidence that additional complexity yields economic benefits
+    or penalties at this model scale.
+  \item We report poor inter-rater reliability (Krippendorff's $\alpha=0.034$~\cite{krippendorff2004content}) among a
     three-model judge panel, highlighting the fragility of LLM-as-judge
-    evaluation for budget-model outputs.
-  \item We establish an aggregate frontier Cost-of-Pass of \$0.113,
+    evaluation for budget-model outputs and suggesting that judge variance is
+    a primary source of measurement noise.
+  \item We establish an aggregate frontier Cost-of-Pass of ${\sim}$\$0.11,
     showing that meaningful ablation studies can be conducted at modest
     cost with budget models.
 \end{enumerate}
@@ -284,17 +288,18 @@ motivated by the intuition that complex tasks benefit from division of labor:
 a coding task might be decomposed into planning, implementation, testing, and
 review subtasks, each handled by a specialized agent.
 
-While multi-agent architectures often improve performance for frontier models,
-their interaction with model capacity has received limited systematic study.
-Anecdotal evidence suggests that smaller models struggle with the coordination
-overhead of multi-agent systems, but this has not been rigorously quantified
-in a controlled experimental design.
+While multi-agent architectures often improve performance for frontier
+models~\cite{guo2024llmmultiagents}, their interaction with model capacity has
+received limited systematic study. Recent work suggests that smaller models
+struggle with the coordination overhead of multi-agent
+systems~\cite{dervishi2025multiagent}, but this has not been rigorously
+quantified in a controlled ablation design.
 
-Our work contributes to this area by providing preliminary evidence, through
-controlled ablation, that delegation-based architectures can be
-counterproductive for budget models. We provide, to our knowledge, the first statistical evidence for a significant
-transition point (the T2--T3 boundary) where multi-agent coordination begins to
-degrade rather than improve performance.
+Our work contributes to this area by providing the first controlled ablation
+study across seven architectural tiers for a budget model, finding that
+tier selection has no statistically significant effect on pass rate
+($p=0.2015$), though strong tier $\times$ task interactions indicate that
+architectural decisions remain task-contingent.
 
 \subsection{LLM-as-Judge Evaluation}
 \label{sec:llm_judge}
@@ -366,7 +371,8 @@ tiers are defined as follows:
 
 \begin{description}
   \item[T0 -- Prompts (24 subtests)] Ablation of system prompt content, ranging
-    from an empty prompt to the full \texttt{CLAUDE.md} configuration. This
+    from an empty prompt to the full \texttt{CLAUDE.md} configuration sourced
+    from ProjectOdyssey~\cite{projectodyssey}. This
     tier isolates the effect of prompt engineering on model behavior. The 24
     subtests span a spectrum from no system prompt at all through progressively
     richer prompt configurations, enabling fine-grained analysis of prompt
@@ -416,15 +422,14 @@ between tiers.
     \node[tier, fill=green!20]  (t0) at (0,0)    {T0: Prompts (24)};
     \node[tier, fill=green!30]  (t1) at (0,1.2)  {T1: Skills (10)};
     \node[tier, fill=green!40]  (t2) at (0,2.4)  {T2: Tooling (15)};
-    \node[tier, fill=red!20]    (t3) at (0,3.6)  {T3: Delegation (41)};
-    \node[tier, fill=red!30]    (t4) at (0,4.8)  {T4: Hierarchy (14)};
-    \node[tier, fill=red!35]    (t5) at (0,6.0)  {T5: Hybrid (15)};
-    \node[tier, fill=red!40]    (t6) at (0,7.2)  {T6: Super (1)};
+    \node[tier, fill=blue!15]    (t3) at (0,3.6)  {T3: Delegation (41)};
+    \node[tier, fill=blue!20]    (t4) at (0,4.8)  {T4: Hierarchy (14)};
+    \node[tier, fill=blue!25]    (t5) at (0,6.0)  {T5: Hybrid (15)};
+    \node[tier, fill=blue!30]    (t6) at (0,7.2)  {T6: Super (1)};
 
     \draw[->, thick] (t0) -- (t1);
     \draw[->, thick] (t1) -- (t2);
-    \draw[->, thick, dashed, red] (t2) -- node[right, font=\footnotesize\itshape]
-      {Performance drop} (t3);
+    \draw[->, thick] (t2) -- (t3);
     \draw[->, thick] (t3) -- (t4);
     \draw[->, thick] (t4) -- (t5);
     \draw[->, thick] (t5) -- (t6);
@@ -439,9 +444,8 @@ between tiers.
       {Full orchestration};
   \end{tikzpicture}
   \caption{Scylla tier hierarchy. Green tiers (T0--T2) represent single-agent
-    configurations; red tiers (T3--T6) introduce multi-agent coordination.
-    The dashed arrow marks the T2--T3 performance drop identified in this
-    study.}
+    configurations; blue tiers (T3--T6) introduce multi-agent coordination.
+    All tiers achieve comparable pass rates (0.935--1.000) in this study.}
   \label{fig:tier_architecture}
 \end{figure}
 
@@ -489,21 +493,11 @@ evaluation protocol proceeds as follows:
 A key design decision in Scylla is its partial-failure model. When multiple
 tiers run in parallel within an experiment, a tier failure does not abort the
 experiment. The experiment continues with the remaining tiers and can reach a
-``complete'' state even if some tiers are in a ``failed'' state. This is
-intentional: partial results are preserved and reported, enabling analysis
-even when some configurations produce errors.
-
-This design is particularly important for our study, where tiers T4--T6
-exhibit catastrophic failure on test-001. Under an all-or-nothing model, these
-failures would have aborted the experiment, losing the data from the
-successful tiers. Under Scylla's partial-failure semantics, the zero pass
-rates in T4--T6 are recorded and analyzed alongside the high pass rates in
-T0--T2, producing the sharp T2--T3 degradation finding that is the central result of
-this paper.
-
-Operators inspecting results must check per-tier states rather than the
-overall experiment state to determine whether all tiers succeeded. A complete
-experiment may contain a mixture of successful and failed tier states.
+``complete'' state even if some tiers are in a ``failed'' state. Each tier's
+results are recorded independently, preserving partial results for analysis
+even when individual configurations encounter infrastructure errors.
+Operators must therefore check per-tier states rather than the overall
+experiment state to determine whether all tiers succeeded.
 
 \subsection{Metrics}
 \label{sec:metrics}
@@ -512,9 +506,18 @@ Scylla evaluates agent performance across three categories of metrics:
 
 \textbf{Quality Metrics.} Pass Rate ($R_{\text{pass}}$) measures the fraction
 of runs exceeding the pass threshold. Implementation Rate ($R_{\text{impl}}$)
-captures whether the agent attempted the task at all, using the median across
-judges' binary assessments. The Fine-Grained Progress Rate captures partial
-task completion on a continuous scale.
+measures the proportion of rubric points achieved versus the maximum available,
+using the median across judges.\footnote{Implementation rate is computed per
+judge as $\sum \text{achieved}_i / \sum \text{max}_i$ across all criteria $i$
+in that judge's evaluation, then the consensus uses the median across judges.
+In one run (test-001, T1, subtest~01, run~1), a budget-model judge
+(Haiku) assigned 4~points on a 3-point code quality criterion, producing a
+per-judge implementation rate of 1.071. Combined with a missing Opus
+evaluation for that run (leaving only two judges), the median implementation
+rate is 1.028---the only value exceeding~1.0 in the dataset. This anomaly
+does not materially affect any aggregate statistics.}
+The Fine-Grained Progress Rate captures partial task completion on a continuous
+scale.
 
 \textbf{Economic Metrics.} Cost-of-Pass (CoP) is defined as the mean cost per
 run divided by the pass rate:
@@ -544,17 +547,19 @@ objectives over the course of execution.
 \label{sec:model_selection}
 
 We select \texttt{claude-haiku-4-5} as the subject model for all experiments.
-Haiku 4.5 is Anthropic's budget frontier model, positioned below Sonnet and
-Opus in the model hierarchy. It is designed for high-throughput, cost-efficient
-inference while maintaining sufficient capability for coding tasks.
+Haiku 4.5 is Anthropic's budget frontier model---the most cost-efficient
+option in the Claude model family, positioned below Sonnet and Opus in the
+capability hierarchy. It is designed for high-throughput, low-cost inference
+while maintaining sufficient capability for coding tasks.
 
 This selection is motivated by three considerations. First, budget models are
 the most likely to be deployed at scale in production environments, making
 their architectural sensitivities practically important for deployment
 decisions. Second, the prior Scylla dryrun~\cite{scylla2026dryrun} used Claude
 Sonnet 4.5, enabling cross-model comparison in future work. Third, the lower
-per-token cost of Haiku (\$0.25/MTok input, \$1.25/MTok output for standard
-pricing as of January 2026)\footnote{Anthropic pricing retrieved January 2026;
+per-token cost of Haiku (\$1.00/MTok input, \$5.00/MTok output for standard
+pricing, with prompt caching at \$1.25/MTok for cache writes and \$0.10/MTok
+for cache reads)\footnote{Anthropic pricing retrieved April 2026;
 prices are subject to change.} enables a larger experimental matrix at a fixed budget.
 
 \subsection{Task Selection}
@@ -572,14 +577,22 @@ generality of tier effects across task characteristics:
     this task, the failure is attributable to the architecture, not the task.
     \emph{Difficulty}: trivial. \emph{Repository}: Hello-World.
     \emph{Language}: Python.
+    \emph{Expected outcome}: This task is expected to establish a performance
+    floor---all tiers should achieve near-perfect results on this trivial task,
+    and any observed failures are attributable to architectural overhead rather
+    than task difficulty.
   \item[test-002: Mojo Hello World with Bazel and Documentation] A moderate
     task requiring a ``Hello World'' program in the Mojo programming language
-    within a Modular repository, including Bazel build configuration and
+    within the official Modular repository, including Bazel build configuration and
     accompanying documentation. This task tests the agent's ability to work
     with a less common programming language and a complex build system, both
     of which may have limited representation in the model's training data.
     \emph{Difficulty}: moderate. \emph{Repository}: modular.
     \emph{Language}: Mojo.
+    \emph{Expected outcome}: This task is expected to differentiate tiers---the
+    unfamiliar programming language and complex build system may reveal
+    capability gaps between architectural configurations, particularly for
+    tiers with limited tooling or domain knowledge support.
   \item[test-003: Add mypy to pixi Configuration] A moderate task requiring the
     addition of mypy type checking to an existing pixi-managed Python/Mojo
     project~\cite{projectodyssey}. This task tests the agent's ability to
@@ -587,6 +600,10 @@ generality of tier effects across task characteristics:
     and work within the constraints of an established codebase.
     \emph{Difficulty}: moderate. \emph{Repository}: ProjectOdyssey.
     \emph{Language}: Python/Mojo.
+    \emph{Expected outcome}: This task is expected to test integration
+    capability---modifying existing configurations requires understanding
+    project context, dependency relationships, and tooling conventions, which
+    may favor tiers with richer contextual support.
 \end{description}
 
 The three tasks were selected to span a range of dimensions: language
@@ -647,43 +664,265 @@ deliberate design choice. It enables us to test for self-preference bias
 judges) and to assess whether budget models possess sufficient evaluative
 capacity to serve as reliable judges.
 
+Each judge receives a structured evaluation prompt containing four components:
+(1)~the original task prompt issued to the agent, (2)~the agent's code output
+(files created or modified), (3)~build pipeline results (compilation status,
+test outcomes, linting output), and (4)~a structured rubric defining five
+evaluation criteria with associated weights. The criteria and their weights are:
+\emph{functional correctness} (0.35), \emph{code quality} (0.20),
+\emph{build pipeline} (0.10), \emph{proportionality} (0.15), and
+\emph{overall quality} (0.20). Each judge scores every criterion on a 0--10
+scale; the weighted sum produces a single per-judge score, and the consensus
+score is the arithmetic mean across the three judges.
+
+In practice, the number and naming of criteria varies across experiments and
+judges. test-001 (Python Hello World) consistently produces the standard
+five-criterion rubric across all judge evaluations. test-002 (Mojo with Bazel),
+however, elicits task-specific criteria from the judges: individual evaluations
+contain between 4 and 12 scored dimensions, with criterion names reflecting
+Mojo-specific concerns (e.g., \emph{memory\_safety}, \emph{mojo\_syntax},
+\emph{deprecated\_patterns}). test-003 (mypy configuration) collapses to
+predominantly single-criterion evaluations. This variability arises because the
+judge models interpret the rubric prompt with varying granularity depending on
+task complexity. The per-judge score and implementation rate are computed from
+whatever criteria the judge produces, so the aggregate metrics remain
+well-defined even when the underlying rubric structure differs. However, the
+per-criterion analysis in Table~\ref{tab:criteria_performance} is restricted to
+the five standard criteria and therefore reflects primarily test-001 data.
+
+This study's judge panel represents an architectural change from the prior
+Scylla dryrun~\cite{scylla2026dryrun}. The dryrun used Claude Sonnet~4.5 as
+the subject model with 4.5-series judges (Opus~4.5, Sonnet~4.5, Haiku~4.5).
+The present study upgrades to 4.6-series judges---Opus~4.6 and
+Sonnet~4.6---while retaining Haiku~4.5 as both subject and judge. This creates
+a mixed-generation judge panel in which two judges (Opus~4.6 and Sonnet~4.6)
+belong to a newer model generation than the subject agent (Haiku~4.5). The
+generational gap may introduce evaluation asymmetries: newer judges may have
+improved calibration or different scoring baselines relative to the subject's
+generation. We note this design limitation and examine judge-level score
+distributions in Section~\ref{sec:agreement_results} to assess whether
+generational differences materially affect evaluation reliability.
+
 \subsection{Statistical Methods}
 \label{sec:statistical_methods}
 
-All score distributions are tested for normality using the Shapiro--Wilk test.
-As all 14 tier $\times$ \{Score, Cost\} combinations reject normality
-($p < 0.05$ for all 7 tiers $\times$ 2 metrics; see
-Appendix~\ref{app:normality}), we employ non-parametric methods
-throughout. Additional metrics (implementation rate, duration) were also
-tested and similarly reject normality for most tier combinations:
+Analysis of Variance (ANOVA) is a family of statistical tests that partition
+observed variance into components attributable to different factors. Because our
+data violates ANOVA's normality assumptions (Appendix~\ref{app:normality}), we
+employ non-parametric alternatives throughout.
 
-\begin{itemize}
-  \item \textbf{Omnibus tests}: Kruskal--Wallis $H$ test~\cite{kruskal1952use} for overall tier
-    differences across all seven tiers.
-  \item \textbf{Pairwise comparisons}: Mann--Whitney $U$ test~\cite{mann1947test} with Holm--Bonferroni
-    correction~\cite{holm1979simple} for 7 planned comparisons (6 adjacent transitions plus T0--T6),
-    applied within each metric family separately.
-  \item \textbf{Effect sizes}: Cliff's $\delta$~\cite{cliff1993dominance} with 95\% bootstrap confidence
-    intervals, providing a non-parametric measure of effect magnitude.
-  \item \textbf{Interaction analysis}: Scheirer--Ray--Hare (SRH) test~\cite{scheirer1976analysis} for
-    tier $\times$ experiment interactions, the non-parametric analog of
-    two-way ANOVA. SRH operates on ranked data and decomposes the total sum
-    of squared ranks into main effects and interactions.
-  \item \textbf{Inter-rater reliability}: Krippendorff's $\alpha$~\cite{krippendorff2004content} (interval
-    scale) for overall panel reliability, and pairwise Spearman/Pearson
-    correlations for judge-pair agreement.
-  \item \textbf{Confidence intervals}: Bootstrap 95\% confidence intervals
-    (BCa method~\cite{efron1987better}, 10{,}000 resamples) for pass rates and other proportions;
-    Clopper--Pearson exact intervals~\cite{clopper1934use} for small-sample tiers (e.g., T6 with $n=9$).
-\end{itemize}
+All score distributions are tested for normality using the Shapiro--Wilk test.
+Of 14 tier $\times$ \{Score, Cost\} combinations, 13 reject normality
+($p < 0.05$; the sole exception is T6 Cost with $n=9$, $p=0.069$; see
+Appendix~\ref{app:normality}), so we employ non-parametric methods
+throughout. Additional metrics (implementation rate, duration) were also
+tested and similarly reject normality for most tier combinations.
+
+The following subsections detail each statistical method used in this study,
+including the test statistic, assumptions, and interpretation guidelines.
+
+\subsubsection{Shapiro--Wilk Test}
+\label{sec:shapiro_wilk}
+
+The Shapiro--Wilk test~\cite{shapiro1965analysis} assesses whether a sample is
+drawn from a normally distributed population. The test statistic is:
+\begin{equation}
+  W = \frac{\left(\sum_{i=1}^{n} a_i x_{(i)}\right)^2}{\sum_{i=1}^{n}(x_i - \bar{x})^2}
+\end{equation}
+where $x_{(i)}$ are the order statistics and $a_i$ are tabulated constants
+derived from the expected values of normal order statistics. $W$ ranges from
+0 to 1, with values near 1 indicating normality.
+
+We use the Shapiro--Wilk test as a gatekeeper: when normality is rejected
+($p < 0.05$), we employ non-parametric alternatives for all subsequent
+analyses. This test was chosen over the Anderson--Darling and
+Kolmogorov--Smirnov alternatives because of its superior power for small to
+moderate sample sizes~\cite{razali2011power}, which matches our per-tier
+sample sizes ($n = 9$ to $n = 369$). In this study, 13 of 14 tier $\times$
+\{Score, Cost\} combinations reject normality (the sole exception is T6 Cost,
+$n=9$, $p=0.069$), motivating the use of non-parametric methods throughout.
+
+\subsubsection{Kruskal--Wallis H Test}
+\label{sec:kruskal_wallis}
+
+The Kruskal--Wallis $H$ test~\cite{kruskal1952use} is a non-parametric analog
+of one-way ANOVA that tests whether $k$ independent samples originate from the
+same distribution. The test statistic is:
+\begin{equation}
+  H = \frac{12}{N(N+1)} \sum_{j=1}^{k} n_j \left(\bar{R}_j - \bar{R}\right)^2
+\end{equation}
+where $N$ is the total number of observations, $n_j$ is the sample size for
+group $j$, $\bar{R}_j$ is the mean rank within group $j$, and $\bar{R} =
+(N+1)/2$ is the overall mean rank. Under the null hypothesis of identical
+distributions, $H$ follows a $\chi^2$ distribution with $k-1$ degrees of
+freedom.
+
+We use the Kruskal--Wallis test as the omnibus test for overall tier
+differences across all seven tiers ($k = 7$). Unlike one-way ANOVA, it does
+not assume normality or equal variances---it requires only that the
+observations be ordinal and the groups independent. A significant result
+($p < 0.05$) indicates that at least one tier's distribution differs from the
+others but does not identify which pairs differ, motivating the post-hoc
+pairwise comparisons described below.
+
+\subsubsection{Mann--Whitney U Test}
+\label{sec:mann_whitney}
+
+The Mann--Whitney $U$ test~\cite{mann1947test} is a non-parametric analog of
+the independent-samples $t$-test that compares two independent groups. For
+samples of sizes $n_1$ and $n_2$, the $U$ statistic counts the number of
+times an observation from one group precedes an observation from the other in
+the combined ranking:
+\begin{equation}
+  U = n_1 n_2 + \frac{n_1(n_1+1)}{2} - R_1
+\end{equation}
+where $R_1$ is the sum of ranks assigned to the first group.
+
+We apply the Mann--Whitney $U$ test for pairwise tier comparisons following a
+significant Kruskal--Wallis result. Specifically, we test 7 planned
+comparisons per metric family: the 6 adjacent tier transitions (T0 vs.\ T1,
+T1 vs.\ T2, \ldots, T5 vs.\ T6) plus the endpoint comparison (T0 vs.\ T6).
+The test does not assume normality or equal variances, making it appropriate
+for our score and cost distributions. A significant result indicates that the
+two tiers' distributions are stochastically different.
+
+\subsubsection{Holm--Bonferroni Correction}
+\label{sec:holm_bonferroni}
+
+The Holm--Bonferroni correction~\cite{holm1979simple} is a step-down procedure
+that controls the family-wise error rate (FWER) when performing multiple
+hypothesis tests. Given $m$ tests with ordered $p$-values $p_{(1)} \leq
+p_{(2)} \leq \cdots \leq p_{(m)}$, the procedure rejects hypothesis $(i)$ if:
+\begin{equation}
+  p_{(i)} \leq \frac{\alpha}{m - i + 1}
+\end{equation}
+starting from the smallest $p$-value and stopping at the first non-rejected
+hypothesis.
+
+We chose the Holm--Bonferroni correction over two alternatives. Compared to the
+standard Bonferroni correction ($\alpha/m$ for all tests), Holm--Bonferroni is
+uniformly more powerful while still controlling FWER at level $\alpha$. Compared
+to the Benjamini--Hochberg procedure~\cite{benjamini1995controlling}, which
+controls the false discovery rate (FDR), Holm--Bonferroni provides stronger
+error control by bounding the probability of \emph{any} false rejection rather
+than the expected \emph{proportion} of false rejections. Given our small number
+of planned comparisons ($m = 7$), the power loss relative to FDR control is
+modest, and the stronger FWER guarantee is preferable for confirmatory analysis.
+
+\subsubsection{Cliff's Delta}
+\label{sec:cliffs_delta}
+
+Cliff's $\delta$~\cite{cliff1993dominance} is a non-parametric effect size
+measure that quantifies the degree of overlap between two distributions. It is
+defined as:
+\begin{equation}
+  \delta = \frac{\left|\{(x_i, y_j) : x_i > y_j\}\right| -
+                  \left|\{(x_i, y_j) : x_i < y_j\}\right|}{n_1 \cdot n_2}
+\end{equation}
+where $n_1$ and $n_2$ are the sample sizes of the two groups. The statistic
+ranges from $-1$ (all values in the first group are less than all values in the
+second) to $+1$ (the reverse), with 0 indicating complete overlap.
+
+We use Cliff's $\delta$ rather than Cohen's $d$ because it does not assume
+normality or equal variances, matching our non-parametric testing framework. We
+report 95\% bootstrap confidence intervals alongside each estimate. Effect
+magnitudes are interpreted using established thresholds~\cite{romano2006appropriate}:
+$|\delta| < 0.11$ (negligible), $0.11 \leq |\delta| < 0.28$ (small),
+$0.28 \leq |\delta| < 0.43$ (medium), and $|\delta| \geq 0.43$ (large).
+
+\subsubsection{BCa Bootstrap Confidence Intervals}
+\label{sec:bca_bootstrap}
+
+The bias-corrected and accelerated (BCa) bootstrap~\cite{efron1987better}
+produces confidence intervals that correct for both bias and skewness in the
+bootstrap distribution. Given $B$ bootstrap resamples, the BCa interval
+adjusts the percentile boundaries using a bias-correction factor $\hat{z}_0$
+(estimated from the proportion of bootstrap estimates below the original
+statistic) and an acceleration factor $\hat{a}$ (estimated via the jackknife).
+
+We use BCa bootstrap confidence intervals with $B = 10{,}000$ resamples for
+pass rates and other proportions. The BCa method was chosen over simple
+percentile bootstrap because it provides second-order accuracy---the coverage
+error is $O(n^{-1})$ rather than $O(n^{-1/2})$---which is important given our
+moderate sample sizes. The BCa interval is also transformation-respecting,
+meaning it produces identical results regardless of the scale on which the
+statistic is computed.
+
+\subsubsection{Clopper--Pearson Intervals}
+\label{sec:clopper_pearson}
+
+The Clopper--Pearson interval~\cite{clopper1934use} is an exact confidence
+interval for a binomial proportion. For $k$ successes in $n$ trials, the
+$100(1-\alpha)\%$ interval is:
+\begin{equation}
+  \left[B\!\left(\frac{\alpha}{2};\, k,\, n-k+1\right),\;
+        B\!\left(1-\frac{\alpha}{2};\, k+1,\, n-k\right)\right]
+\end{equation}
+where $B(p;\, a, b)$ is the $p$-th quantile of the Beta distribution with
+parameters $a$ and $b$.
+
+We use Clopper--Pearson intervals for small-sample tiers, particularly T6 with
+$n = 9$ runs per experiment. Unlike the normal approximation or Wilson interval,
+the Clopper--Pearson interval guarantees at least nominal coverage for any
+sample size, making it the conservative choice when $n$ is too small for
+asymptotic methods to be reliable. The resulting intervals are wider than
+approximate alternatives, which we consider appropriate given our emphasis on
+hedged conclusions.
+
+\subsubsection{Scheirer--Ray--Hare Test}
+\label{sec:srh_test}
+
+The Scheirer--Ray--Hare (SRH) test~\cite{scheirer1976analysis} is a
+non-parametric extension of two-way ANOVA that operates on ranked data. All
+observations are ranked jointly, and the total sum of squared ranks is
+decomposed into components attributable to each main effect and their
+interaction. The test statistic for each factor is:
+\begin{equation}
+  H_{\text{factor}} = \frac{SS_{\text{factor}}}{SS_{\text{total}} / (N-1)}
+\end{equation}
+which is compared against a $\chi^2$ distribution with degrees of freedom
+equal to those of the corresponding factor.
+
+We use the SRH test to assess tier $\times$ experiment interactions---that is,
+whether the effect of architectural tier varies across tasks. This is critical
+for determining whether a single ``best tier'' exists or whether the optimal
+configuration is task-dependent. The SRH test decomposes effects into three
+components: the tier main effect, the experiment main effect, and the
+tier $\times$ experiment interaction. A significant interaction term indicates
+that tier rankings are not stable across experiments. We note that the
+validity of the SRH interaction test has been debated in the
+literature~\cite{scheirer1976analysis}, and the test's power may be limited
+for unbalanced designs. The interaction results should therefore be
+interpreted as directional evidence rather than definitive conclusions.
+
+\subsubsection{Krippendorff's Alpha}
+\label{sec:krippendorffs_alpha}
+
+Krippendorff's $\alpha$~\cite{krippendorff2004content} measures inter-rater
+reliability for any number of raters, any number of categories, and any level
+of measurement. It is defined as:
+\begin{equation}
+  \alpha = 1 - \frac{D_o}{D_e}
+\end{equation}
+where $D_o$ is the observed disagreement among raters and $D_e$ is the
+disagreement expected by chance. For interval-scale data (as used here), the
+difference function is squared Euclidean distance between values.
+
+We use Krippendorff's $\alpha$ on the interval scale to assess overall
+agreement among the three-judge panel. It was chosen over alternatives such as
+Cohen's $\kappa$ (limited to two raters and nominal data) and the intraclass
+correlation coefficient (assumes normality) because it handles missing data
+natively, supports any number of raters, and is appropriate for interval-scale
+scores. Interpretation follows established thresholds~\cite{krippendorff2004content}:
+$\alpha < 0.667$ is unacceptable for drawing conclusions, $0.667 \leq \alpha
+< 0.800$ permits tentative conclusions, and $\alpha \geq 0.800$ indicates
+acceptable reliability. We supplement $\alpha$ with pairwise Spearman and
+Pearson correlations to diagnose which judge pairs contribute most to
+agreement or disagreement.
 
 Implementation rate comparisons use filtered sample sizes: only runs where the
 agent attempted the task contribute to the pairwise tests, which reduces the
 effective $n$ for some tiers relative to the full run count.
-
-Three process metrics---fine-grained progress rate, change fail percentage, and
-PR revert rate---are zero for all runs and are excluded from analysis. These
-metrics are designed for multi-file tasks not represented in this study.
 
 Given the small sample size ($N=3$ per subtest), all confidence intervals are
 necessarily wide. We adopt hedged language throughout and characterize our
@@ -701,18 +940,18 @@ larger-scale confirmation studies.
 \label{sec:experiment_overview}
 
 Table~\ref{tab:experiment_overview} presents the high-level results for each
-experiment. The three experiments span a range of aggregate pass rates from
-0.519 (test-001) to 0.956 (test-003), with total costs ranging from \$13.72 to
-\$81.28.
+experiment. All three experiments achieve high aggregate pass rates, ranging
+from 0.950 (test-002) to 0.992 (test-001), with total costs ranging from
+\$14.71 to \$81.28.
 
 \input{tables/tab11_experiment_overview}
 
-A striking finding is that the trivial task (test-001) achieves the
-\emph{lowest} overall pass rate. This counterintuitive result---a simpler task
-being solved less frequently---is driven entirely by catastrophic failure in
-tiers T4--T6, where the agent's delegation and orchestration mechanisms
-actively prevent it from completing a task that the base model handles with
-ease. We examine this phenomenon in detail in Section~\ref{sec:test001}.
+The trivial task (test-001) achieves the \emph{highest} overall pass rate
+(0.992), consistent with the expectation that simpler tasks are solved more
+reliably. test-003 (mypy configuration) follows at 0.956, and test-002 (Mojo
+with Bazel) achieves 0.950---the lowest pass rate but the highest cost,
+reflecting the greater complexity of producing unfamiliar-language code with
+build configuration.
 
 The best tier varies across experiments: T1 for test-001, T6 for test-002 and
 test-003 (though T6 has only $n=3$ runs per experiment and very wide confidence
@@ -728,24 +967,24 @@ distributions across all tiers and experiments.
   \centering
   \includegraphics[width=\textwidth]{fig15c_tier_summary_heatmap.png}
   \caption{Tier summary heatmap showing mean consensus scores by tier (y-axis)
-    and run number (x-axis), faceted by model. Color encodes mean score
-    (red--yellow--green scale). The degradation in tiers T3--T6 is visible
-    as a shift toward red/yellow cells, while T0--T2 show predominantly
-    green cells across runs.}
+    and run number (x-axis). Color encodes mean score
+    (red--yellow--green scale). All tiers show predominantly green cells,
+    indicating consistently high scores across architectural configurations.}
   \label{fig:tier_summary_heatmap}
 \end{figure}
 
 \subsection{test-001: Python Hello World}
 \label{sec:test001}
 
-The trivial Python Hello World task produces the most dramatic results in the
-study. Tiers T0--T2 achieve near-perfect performance, while tiers T4--T6
-exhibit complete failure:
+The trivial Python Hello World task achieves near-perfect performance across
+all tiers, with an aggregate pass rate of 0.992. The per-tier results
+confirm that the task's simplicity makes it solvable by every architectural
+configuration:
 
 \begin{table}[htbp]
   \centering
-  \caption{test-001 (Python Hello World): Per-tier results. Tiers T4--T6
-    achieve zero pass rate despite the trivial nature of the task.}
+  \caption{test-001 (Python Hello World): Per-tier results. All tiers achieve
+    pass rates above 0.95, consistent with the trivial nature of the task.}
   \label{tab:test001}
   \small
   \begin{tabular}{lrrrrr}
@@ -755,22 +994,20 @@ exhibit complete failure:
     T0 & 72  & 0.958 & 0.870 & 0.038 & 0.040 \\
     T1 & 30  & 1.000 & 0.908 & 0.037 & 0.037 \\
     T2 & 45  & 1.000 & 0.908 & 0.037 & 0.037 \\
-    T3 & 123 & 0.350 & 0.318 & 0.038 & 0.109 \\
-    T4 & 42  & 0.000 & 0.000 & 0.038 & $\infty$ \\
-    T5 & 45  & 0.000 & 0.000 & 0.038 & $\infty$ \\
-    T6 & 3   & 0.000 & 0.000 & 0.070 & $\infty$ \\
+    T3 & 123 & 1.000 & 0.928 & 0.041 & 0.041 \\
+    T4 & 42  & 1.000 & 0.927 & 0.044 & 0.044 \\
+    T5 & 45  & 1.000 & 0.930 & 0.042 & 0.042 \\
+    T6 & 3   & 1.000 & 0.930 & 0.106 & 0.106 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-The zero pass rate for T4--T6 on this trivial task is the most striking result
-in the entire study. These tiers introduce hierarchical delegation and
-orchestration---mechanisms that, for a task requiring only a single line of
-code (\texttt{print("Hello, World!")}), create coordination overhead that the
-budget model cannot resolve. T4--T6 runs complete in a mean of $\sim$17\,s
-with no evaluable output, suggesting the agent encounters a fatal
-orchestration error immediately rather than exhausting its computational
-budget on coordination overhead.
+The near-universal success on this trivial task establishes an important
+baseline: for a task requiring only a single line of code
+(\texttt{print("Hello, World!")}), architectural complexity neither helps nor
+hinders performance. All delegation-based tiers (T3--T6) achieve perfect pass
+rates, demonstrating that the coordination overhead of multi-agent
+architectures does not impede the budget model on simple tasks.
 
 T1 and T2 achieve perfect pass rates (1.000) with identical scores (0.908),
 suggesting that skills and tooling provide no marginal benefit over basic
@@ -779,55 +1016,34 @@ slightly lower pass rate (0.958), indicating that some prompt configurations
 in the T0 ablation spectrum (particularly minimal or empty prompts) cause
 occasional failures.
 
-Inspection of the per-subtest data reveals that all three T0 failures on
-test-001 are concentrated in subtest~00, the empty-prompt configuration
-(\texttt{system\_prompt\_mode: none}), which achieves 0/3 passing across all
-three experiments (1/9 overall). With subtest~00 excluded, T0 achieves a
-perfect 1.000 pass rate on test-001, identical to T1 and T2. The empty-prompt
-agent receives the task instructions as a user message but has no system
-prompt providing behavioral framing. Examination of the agent transcripts
-reveals that rather than executing the task, the model meta-reasons about the
-evaluation framework---describing what the task asks for and posing clarifying
-questions (``Would you like me to execute this task?'')---completing in only
-2~API calls and $\sim$6\,s of agent time. In contrast, subtest~01 (which adds
-only the default tool system prompt) executes the task immediately and
-succeeds. This suggests that the system prompt's role is not merely
-informational but \emph{behavioral}: it provides the framing that shifts a
-budget model from meta-reasoning to task execution, even when the task
-instructions are unambiguous.
+Inspection of the per-subtest data reveals that the T0 failures on test-001
+are concentrated in subtest~00, the empty-prompt configuration
+(\texttt{system\_prompt\_mode: none}). With subtest~00 excluded, T0 achieves a
+perfect 1.000 pass rate on test-001, identical to all other tiers. The
+empty-prompt agent receives the task instructions as a user message but has no
+system prompt providing behavioral framing. Examination of the agent
+transcripts reveals that rather than executing the task, the model
+meta-reasons about the evaluation framework---describing what the task asks
+for and posing clarifying questions (``Would you like me to execute this
+task?'')---completing in only 2~API calls and $\sim$6\,s of agent time. In
+contrast, subtest~01 (which adds only the default tool system prompt) executes
+the task immediately and succeeds. This suggests that the system prompt's role
+is not merely informational but \emph{behavioral}: it provides the framing
+that shifts a budget model from meta-reasoning to task execution, even when
+the task instructions are unambiguous.
 
-T3 (flat delegation) achieves a partial pass rate of 0.350, suggesting that
-some of the 41 specialist configurations can still solve the task, but the
-majority fail. The cost per run is nearly identical across all tiers
-(\$0.037--\$0.070), confirming that the agent consumes similar resources
-regardless of whether it produces useful output.
-
-This result constitutes a clear case of \emph{architectural
-over-specification}: the additional complexity of delegation is not merely
-unhelpful but actively harmful. The budget model lacks the capacity to
-simultaneously manage delegation protocols and solve the underlying task,
-even when the task itself is trivial. The T4--T6 failures are categorical
-rather than probabilistic---zero out of 90 runs across these three tiers
-produced a passing result.
-
-\textbf{Note on evaluation coverage.} The judge evaluations for test-001 are
-incomplete: only 544 of the expected 1,080 judge assessments are present in
-the data, with T4, T5, and T6 having zero judge evaluations. The zero scores
-and pass rates for these tiers reflect the evaluation pipeline's assignment
-of score~$= 0$ when no judge evaluation was obtained, which in turn occurs
-when the agent fails to produce evaluable output (e.g., produces no code
-artifact or terminates without a result). The cost data confirm that these
-runs did execute and consume tokens (mean cost \$0.038--\$0.070 per run),
-but the agent's output was not suitable for judge evaluation. Readers should
-note that the ``catastrophic failure'' interpretation rests on this pipeline
-behavior rather than on explicit negative judge assessments.
+The cost per run is low across all tiers (\$0.037--\$0.106), confirming that
+on trivial tasks the agent consumes modest resources regardless of
+architectural configuration. The elevated cost for T6 (\$0.106) reflects the
+overhead of the full-capability configuration, though this does not translate
+into any quality advantage on a task that all simpler tiers already solve
+perfectly.
 
 \subsection{test-002: Mojo Hello World with Bazel and Documentation}
 \label{sec:test002}
 
-The moderate Mojo task presents a fundamentally different pattern from
-test-001. All tiers achieve high pass rates, with substantially less
-differentiation across the architectural spectrum:
+The moderate Mojo task achieves high pass rates across all tiers, with
+modest differentiation across the architectural spectrum:
 
 \begin{table}[htbp]
   \centering
@@ -850,43 +1066,41 @@ differentiation across the architectural spectrum:
   \end{tabular}
 \end{table}
 
-For this task, tier effects are subtle and, notably, the direction of the
-effect is \emph{reversed} relative to test-001. Pass rates increase slightly
-from T0 (0.903) to T6 (1.000), with a modest upward trend. This reversal is
-a key driver of the significant tier $\times$ experiment interaction discussed
-in Section~\ref{sec:interaction}.
+For this task, pass rates increase slightly from T0 (0.903) to T6 (1.000),
+with a modest upward trend suggesting that additional architectural
+capabilities provide marginal benefit on more complex tasks. This
+task-dependent tier profile is a key driver of the significant tier $\times$
+experiment interaction discussed in Section~\ref{sec:interaction}.
 
 Scores cluster between 0.641 and 0.722, suggesting that while the agent
 consistently attempts and partially completes the task, the quality ceiling is
 bounded by factors other than architecture---likely the model's familiarity
 with Mojo syntax and Bazel build system configuration. The relatively narrow
-score range (0.081 span) contrasts sharply with test-001's range (0.908 span),
-indicating that the task difficulty, rather than the architecture, is the
-primary determinant of output quality.
+score range (0.081 span) indicates that the task difficulty, rather than the
+architecture, is the primary determinant of output quality.
 
 The Cost-of-Pass is remarkably uniform across tiers (\$0.228--\$0.279),
 consistent with the aggregate cost invariance finding. T6 ($n=3$) achieves the
 highest pass rate (1.000) but at the highest CoP (\$0.279), reflecting its
 elevated per-run cost.
 
-One interpretation of these results is that the Mojo task's difficulty
-provides sufficient ``work'' to justify the coordination overhead of
-delegation-based tiers. Unlike the trivial Python task, where delegation is
-unnecessary, the Mojo task involves multiple components (source code, build
-configuration, documentation) that can genuinely benefit from decomposition.
-A complementary explanation is that the model's limited familiarity with
-Mojo---noted in Section~\ref{sec:task_selection} as having ``limited
-representation in the model's training data''---means that specialist agents
-in delegation-based tiers may provide language-specific context or tooling
-that partially compensates for the base model's limited training exposure.
-This advantage is absent for well-represented languages like Python, where the
-base model already possesses deep knowledge.
+One interpretation of these results is that the Mojo task's complexity
+provides sufficient ``work'' to leverage the coordination capabilities of
+delegation-based tiers. The Mojo task involves multiple components (source
+code, build configuration, documentation) that can genuinely benefit from
+decomposition. A complementary explanation is that the model's limited
+familiarity with Mojo---noted in Section~\ref{sec:task_selection} as having
+``limited representation in the model's training data''---means that specialist
+agents in delegation-based tiers may provide language-specific context or
+tooling that partially compensates for the base model's limited training
+exposure. This advantage is absent for well-represented languages like Python,
+where the base model already possesses deep knowledge.
 
 \subsection{test-003: Add mypy to pixi Configuration}
 \label{sec:test003}
 
-The mypy configuration task shows a pattern intermediate between the other two
-experiments, with uniformly high pass rates and subtle tier effects:
+The mypy configuration task shows uniformly high pass rates with subtle tier
+effects:
 
 \begin{table}[htbp]
   \centering
@@ -925,13 +1139,10 @@ on more complex tasks.
 
 T6 achieves a perfect pass rate (1.000) but with only $n=3$ runs, this
 result should be interpreted with extreme caution. At the aggregate level
-($n=9$ across three experiments), T6's pass rate is 0.667. The
+($n=9$ across three experiments), T6's pass rate is 1.000. The
 Clopper--Pearson exact 95\% confidence interval~\cite{clopper1934use}
-$[0.299, 0.925]$ is the preferred interval at this sample size, as it
-maintains nominal coverage for binary data without relying on asymptotic
-approximations. For reference, the BCa bootstrap~\cite{efron1987better}
-interval $[0.333, 0.889]$ is narrower and may exhibit poor coverage at
-$n=9$. Under either interval, a true pass rate as low as 0.299 is not excluded.
+$[0.664, 1.000]$ still admits substantial uncertainty at this sample size,
+and the true pass rate could be considerably lower.
 
 \subsection{Cross-Task Analysis}
 \label{sec:cross_task}
@@ -941,61 +1152,59 @@ presents the tier-level summary statistics.
 
 \input{tables/tab01_tier_summary}
 
-The aggregate results reveal a clear bimodal pattern: tiers T0--T2 form a
-high-performance cluster (pass rate 0.935--0.978, score 0.776--0.816), while
-tiers T3--T6 form a degraded cluster (pass rate 0.630--0.759, score
-0.508--0.610). The transition between these clusters occurs at the T2--T3
-boundary, corresponding to the introduction of multi-agent delegation.
+The aggregate results reveal a remarkably uniform performance profile across
+all tiers. Pass rates range from 0.935 (T0) to 1.000 (T6), with scores
+clustered between 0.776 and 0.828. No sharp performance boundary exists
+between single-agent tiers (T0--T2) and delegation-based tiers (T3--T6);
+instead, all tiers perform well, with T0 showing slightly lower pass rates
+and consistency than the remaining tiers.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{fig04_pass_rate_by_tier.png}
   \caption{Score distributions per tier (histogram, bin width 0.05). Each
     panel shows the distribution of per-run consensus scores for one tier.
-    The red dashed vertical line marks the pass threshold. T0--T2 distributions
-    are concentrated near 1.0; T3--T6 show bimodal distributions with a
-    large mass near 0 (complete failures) alongside a cluster of successful runs.}
+    The red dashed vertical line marks the pass threshold. All tiers show
+    distributions concentrated at high scores, with T0 exhibiting slightly
+    greater spread.}
   \label{fig:pass_rate_by_tier}
 \end{figure}
 
-Consistency (the within-subtest reproducibility of scores) shows a parallel
-pattern. T0--T2 achieve consistency values of 0.734--0.829, while T3--T6
-range from 0.222 to 0.431. This indicates that the higher tiers are not only
-worse on average but also less predictable---their outcomes are more variable
-from run to run, making them unreliable for production deployment.
+Tier-level consistency ($1 - \text{CV}$, computed over all runs in each tier)
+ranges from 0.734 (T0) to 0.841 (T6) in Table~\ref{tab:tier_summary},
+indicating that all tiers produce reasonably reproducible outcomes at the
+aggregate level. However, per-subtest consistency (computed independently for
+each subtest and then averaged) shows wider variation, with some tiers
+exhibiting lower reproducibility at the subtest level---notably T5, whose
+hybrid configurations produce inconsistent results on individual subtests
+despite adequate aggregate performance. The modest consistency advantage of
+T1--T6 over T0 may reflect the stabilizing effect of additional architectural
+scaffolding (skills, tools, or delegation protocols) that reduces sensitivity
+to prompt variation.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{fig01_score_variance_by_tier.png}
-  \caption{Score distributions by tier. The variance increases substantially
-    from T3 onward, reflecting the bimodal outcome distribution in
-    delegation-based tiers: runs either succeed (high score) or fail
-    completely (zero score).}
+  \caption{Score distributions by tier. All tiers show similar variance
+    profiles, with the majority of scores concentrated at high values.
+    T0 exhibits modestly greater spread, consistent with its wider range
+    of prompt configurations.}
   \label{fig:score_variance}
 \end{figure}
 
-Quantitatively, the bimodality is striking: for T3, 22\% of runs score below
-0.1 (complete failure) while 50\% score above 0.7 (successful completion),
-with 28\% in between. For T4--T5, the failure mode is more pronounced
-($\sim$33\% below 0.1, $\sim$40--44\% above 0.7). By contrast, T0--T2 are
-effectively unimodal at high scores (67--76\% above 0.7, 0--4\% below 0.1).
-This pattern suggests a binary delegation outcome: either the coordination
-succeeds and produces high-quality output, or it fails entirely and produces
-near-zero output, with relatively few intermediate outcomes.
-
-The Kruskal--Wallis omnibus test reveals significant tier effects for three
-of five metrics:
+The Kruskal--Wallis omnibus test reveals \emph{no} significant tier effects
+for pass rate, implementation rate, or duration:
 
 \begin{itemize}
-  \item Pass rate: $H(6) = 119.01$, $p < 0.001$ (significant)%
+  \item Pass rate: $H(6) = 8.53$, $p = 0.2015$ (not significant)%
     \footnote{For the binary pass/fail outcome, a chi-squared test on the
     $2 \times 7$ contingency table would be the more natural choice. We use
     Kruskal--Wallis throughout for a unified analytical framework; the
     conclusions are qualitatively identical under both tests.}
   \item Score: $H(6) = 91.3$ (from SRH tier factor), $p < 0.001$ (significant)
-  \item Duration: $H(6) = 40.94$, $p < 0.001$ (significant)
+  \item Duration: $H(6) = 6.74$, $p = 0.345$ (not significant)
   \item Cost: $H(6) = 4.00$, $p = 0.676$ (not significant)
-  \item Implementation rate: $H(6) = 5.47$, $p = 0.486$ (not significant)
+  \item Implementation rate: $H(6) = 5.83$, $p = 0.4423$ (not significant)
 \end{itemize}
 
 Note that the Score and Cost tier statistics above are drawn from the
@@ -1003,48 +1212,23 @@ Scheirer--Ray--Hare tier main effect (Section~\ref{sec:interaction}), as the
 omnibus pipeline tests only pass rate, implementation rate, and duration
 directly.
 
-The non-significance of cost and implementation rate is analytically
-important. It means that all tiers cost approximately the same and that the
-agent's propensity to \emph{attempt} the task is not affected by architecture.
-The differences emerge only in the \emph{quality} of the attempt and the time
-required to complete it. The significant duration effect ($H(6) = 40.94$,
-$p < 0.001$) reveals a counter-intuitive pattern: single-agent tiers (T0--T2)
-run substantially longer than delegation tiers (T3--T6) in aggregate (e.g.,
-T0 mean = 346\,s vs.\ T3 mean = 248\,s). This is driven primarily by the
-rapid failures of T4--T6 on test-001, where runs complete in $\sim$17\,s
-(consistent with immediate orchestration errors) versus 430--505\,s for
-T0--T2. A full duration analysis is deferred to future work; we note that
-wall-clock time represents an operational cost dimension not captured by the
-token-based CoP metric.
-
-Pairwise comparisons with Holm--Bonferroni correction identify the following
-significant and near-significant transitions:
-
-\begin{itemize}
-  \item \textbf{T2 $\to$ T3}: $p < 0.001$, Cliff's $\delta = -0.219$
-    [$-0.268$, $-0.168$] (small effect). This marks the sharpest degradation
-    point, where the introduction of delegation produces a significant drop in pass rate.
-  \item \textbf{T3 $\to$ T4}: $p = 0.058$ (n.s.\ after
-    Holm--Bonferroni correction), Cliff's $\delta = -0.116$ [$-0.212$,
-    $-0.023$] (small effect; the bootstrap CI excludes zero but is not
-    adjusted for multiple comparisons). Hierarchical orchestration may
-    further degrade performance beyond flat delegation, though this does
-    not reach corrected significance.
-  \item \textbf{T0 $\to$ T6}: $p = 0.018$. The overall trend from simplest
-    to most complex is significantly negative.
-  \item \textbf{Duration T2 $\to$ T3}: $p = 0.048$, Cliff's $\delta = -0.154$
-    [$-0.264$, $-0.045$]. T3 runs are stochastically shorter than T2, driven
-    partly by the rapid failures of delegation-based tiers on test-001
-    (T4--T6 complete in $\sim$17\,s vs.\ 430--505\,s for T0--T2).
-\end{itemize}
+The non-significance of pass rate, cost, implementation rate, and duration
+across tiers is the central finding of this study. It means that all tiers
+achieve statistically indistinguishable pass rates, cost approximately the
+same, exhibit similar implementation rates, and complete in comparable time.
+The only metric showing a significant tier effect is the continuous
+\emph{score}, which captures finer-grained quality differences within the
+predominantly passing runs. Since the omnibus test for pass rate is not
+significant, no pairwise comparisons are warranted.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{fig19_effect_size_forest.png}
   \caption{Forest plot of Cliff's $\delta$ effect sizes for pairwise tier
-    comparisons on pass rate (lower-numbered tier is reference group; negative
-    $\delta$ indicates the higher-numbered tier has lower pass rates).
-    The T2--T3 comparison shows the largest magnitude effect.
+    comparisons on score (lower-numbered tier is reference group; negative
+    $\delta$ indicates the higher-numbered tier has lower scores).
+    Effect sizes are uniformly small, consistent with the non-significant
+    omnibus test on pass rate.
     Error bars show 95\% bootstrap confidence intervals.}
   \label{fig:effect_size_forest}
 \end{figure}
@@ -1053,15 +1237,16 @@ significant and near-significant transitions:
 \label{sec:interaction}
 
 The most analytically important finding is the significant tier $\times$
-experiment interaction. The Scheirer--Ray--Hare (SRH) test provides a
-non-parametric decomposition of the effects of tier, experiment, and their
-interaction on the ranked outcome variables:
+experiment interaction on \emph{score}. The Scheirer--Ray--Hare (SRH) test
+provides a non-parametric decomposition of the effects of tier, experiment,
+and their interaction on the ranked outcome variables:
 
 \begin{table}[htbp]
   \centering
   \caption{Scheirer--Ray--Hare analysis of tier $\times$ experiment
     interactions. The score interaction ($H=223.5$) exceeds both main
-    effects, indicating that tier effects are strongly task-dependent.}
+    effects, indicating that tier effects on score are strongly
+    task-dependent.}
   \label{tab:srh}
   \small
   \begin{tabular}{llrrcl}
@@ -1088,15 +1273,19 @@ experiment interaction ($H=223.5$, $df=12$), the experiment main effect
 ($H=178.2$, $df=2$), and the tier main effect ($H=91.3$, $df=6$). Raw
 $H$-statistics are not directly comparable across terms with different degrees
 of freedom, but the significance of all three effects---particularly the
-interaction---indicates that the impact of architectural complexity on quality
-is not uniform: it depends critically on the task being performed.
+interaction---indicates that the impact of architectural complexity on
+\emph{score quality} is not uniform: it depends on the task being performed.
 
-The interaction is driven by the divergent tier profiles across experiments.
-In test-001, tiers T4--T6 score zero while T0--T2 score above 0.87. In
-test-002, the tier profile is nearly flat, with all tiers scoring between
-0.64 and 0.72. In test-003, the profile is again relatively flat, with
-modest variation. The aggregation of these divergent profiles produces the
-significant interaction.
+Crucially, this interaction operates on the continuous score metric, not on
+pass rate. All tiers achieve high pass rates across all experiments (the
+omnibus KW test on pass rate is non-significant at $p=0.2015$). The
+interaction instead reflects that the \emph{relative quality ranking} of tiers
+shifts across tasks. In test-001, the trivial task provides little room for
+quality differentiation and all tiers score similarly at the high end. In
+test-002, tiers with delegation capabilities (T3--T6) show a modest score
+advantage, possibly reflecting the benefit of task decomposition for
+multi-component Mojo projects. In test-003, the tier profile is relatively
+flat, with T1 (skills) showing a slight score edge on the configuration task.
 
 For cost, the experiment main effect is dominant ($H=903.1$, $p<0.001$),
 reflecting the differing cost profiles of the three tasks. test-002 (Mojo) is
@@ -1109,8 +1298,7 @@ The implementation rate shows a similar pattern to cost: strong experiment
 effects ($H=490.7$, $p<0.001$) but no significant tier effects or
 interactions. This indicates that the agent's \emph{willingness to attempt}
 the task is driven by task characteristics rather than architectural
-configuration, while the \emph{quality of the attempt} is
-architecture-dependent.
+configuration.
 
 \begin{figure}[htbp]
   \centering
@@ -1120,22 +1308,22 @@ architecture-dependent.
     rank 1 is best. Color encodes rank (green = best, red = worst). The
     changing color pattern across experiments indicates that tier rankings
     are not stable---the optimal tier varies by task, consistent with the
-    significant tier $\times$ experiment interaction.}
+    significant tier $\times$ experiment interaction on score.}
   \label{fig:tier_rank_stability}
 \end{figure}
 
 Figure~\ref{fig:grade_heatmap} provides a granular view of grade distributions
-across all subtests and experiments, illustrating the divergent patterns that
-drive the interaction effect.
+across all subtests and experiments, illustrating the task-dependent patterns
+that drive the interaction effect.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{fig05_grade_heatmap.png}
   \caption{Grade distribution heatmap. Each cell represents the proportion
-    of runs assigned each letter grade for a tier--grade combination,
-    faceted by model. Darker (higher proportion) cells in the F row for
-    T3--T6 on test-001 contrast with the
-    predominantly A/B grades for test-002 and test-003.}
+    of runs assigned each letter grade for a tier--grade combination.
+    The predominantly A/B grades across all tiers and
+    experiments reflect the uniformly high pass rates, with subtle
+    shifts in grade distribution driving the significant score interaction.}
   \label{fig:grade_heatmap}
 \end{figure}
 
@@ -1145,15 +1333,21 @@ drive the interaction effect.
 The judge panel evaluates each run against five weighted criteria:
 functional correctness, code quality, build pipeline integrity,
 proportionality (response length and scope appropriateness), and overall
-quality (a holistic assessment). Across all runs, the per-criterion mean
-scores reveal that the budget model's weakest dimension is functional
-correctness (0.838~$\pm$~0.276), while code quality (0.972~$\pm$~0.137),
-build pipeline integrity (0.941~$\pm$~0.138), and proportionality
-(0.927~$\pm$~0.137) score substantially higher. Overall quality averages
-0.903~$\pm$~0.133. This pattern---high marks on surface
-quality but lower marks on functional correctness---is consistent with the
-hypothesis that the budget model produces syntactically well-formed code that
-occasionally fails to satisfy the task's functional requirements.
+quality (a holistic assessment). As noted in
+Section~\ref{sec:judge_panel}, the actual criteria produced by judges vary
+across experiments; the analysis below is restricted to evaluations that
+used the standard five-criterion rubric (predominantly test-001, with
+partial coverage in test-002 and test-003).
+
+Across the matched evaluations, the per-criterion mean scores reveal that the
+budget model's weakest dimension is functional correctness
+(0.891~$\pm$~0.239), while code quality (0.980~$\pm$~0.100), build pipeline
+integrity (0.965~$\pm$~0.112), and proportionality (0.964~$\pm$~0.099) score
+substantially higher. Overall quality averages 0.926~$\pm$~0.099. This
+pattern---high marks on surface quality but lower marks on functional
+correctness---is consistent with the hypothesis that the budget model produces
+syntactically well-formed code that occasionally fails to satisfy the task's
+functional requirements.
 
 % ===================================================================
 % 6. INTER-RATER RELIABILITY
@@ -1185,57 +1379,50 @@ statistics.
 
 \input{tables/tab03_judge_agreement}
 
-The headline finding is that Krippendorff's $\alpha$ (interval) is $-0.030$
-(a confidence interval for $\alpha$ is not separately reported here; all
-values of $\alpha < 0$ are below the chance level of 0), computed on
-$N=360$ items (120 subtests $\times$ 3 runs per subtest, with scores
-averaged across the three experiments for each tier--subtest--run
-combination) from the 2,696 available judge evaluations (see
-Section~\ref{sec:limitations} for discussion of missing evaluations). Note
-that averaging scores across experiments before computing $\alpha$ conflates
-inter-experiment variability with inter-rater disagreement; computing $\alpha$
-on individual runs (without averaging across experiments) may yield different
-results.
-The resulting $\alpha = -0.030$ is below chance agreement ($\alpha = 0$). By conventional
+The headline finding is that Krippendorff's $\alpha$ (interval) is $0.034$,
+computed on $N=1{,}080$ items (120 subtests $\times$ 3 runs per subtest
+$\times$ 3 experiments) from the 3,210 available judge evaluations
+(99.1\% of the 3,240 expected; see Section~\ref{sec:limitations} for
+discussion of missing evaluations).
+The resulting $\alpha = 0.034$ is barely above chance agreement ($\alpha = 0$). By conventional
 standards in content analysis~\cite{krippendorff2004content, polo2024efficient}, $\alpha < 0.667$ is
 considered
 unacceptable for drawing conclusions about individual cases, and
-$\alpha > 0.800$ is required for reliable measurement. Our value of $-0.030$
-indicates that the three judges agree less than would be expected by random
-scoring.
+$\alpha > 0.800$ is required for reliable measurement. Our value of $0.034$
+indicates that the three judges agree only marginally better than would be
+expected by random scoring.
 
-The negative value of $\alpha$ is particularly concerning. While $\alpha = 0$
-would indicate random agreement, $\alpha < 0$ suggests systematic
-\emph{disagreement}---the judges are not merely uncorrelated but are
-actively producing divergent evaluations. This could arise if the judges
-apply fundamentally different evaluation criteria or if their evaluation
-strategies are negatively correlated (e.g., one judge favoring verbose output
-while another penalizes it).
+The near-zero value of $\alpha$ is concerning. While $\alpha = 0$
+would indicate random agreement, $\alpha = 0.034$ provides essentially no
+useful signal---the judges are producing nearly uncorrelated evaluations.
+This could arise if the judges apply fundamentally different evaluation
+criteria or if their evaluation strategies diverge (e.g., one judge favoring
+verbose output while another penalizes it).
 
 Pairwise correlations reveal a structured pattern of disagreement. Spearman
 rank correlations are near zero for all pairs:
 
 \begin{itemize}
-  \item Judge~1 (Opus) vs.\ Judge~2 (Sonnet): $\rho = 0.125$
-  \item Judge~1 (Opus) vs.\ Judge~3 (Haiku): $\rho = 0.142$
-  \item Judge~2 (Sonnet) vs.\ Judge~3 (Haiku): $\rho = 0.054$
+  \item Judge~1 (Opus) vs.\ Judge~2 (Sonnet): $\rho = 0.177$
+  \item Judge~1 (Opus) vs.\ Judge~3 (Haiku): $\rho = 0.111$
+  \item Judge~2 (Sonnet) vs.\ Judge~3 (Haiku): $\rho = 0.084$
 \end{itemize}
 
-These near-zero rank correlations indicate that the judges do not agree on
-the \emph{relative ordering} of outputs. An output that Opus rates highly may
-be rated poorly by Sonnet or Haiku, and vice versa.
+These weak rank correlations indicate that the judges show only marginal
+agreement on the \emph{relative ordering} of outputs. An output that Opus
+rates highly may be rated poorly by Sonnet or Haiku, and vice versa.
 
 Pearson correlations are somewhat higher, suggesting some linear association
 in score magnitudes:
 
 \begin{itemize}
-  \item Judge~1 (Opus) vs.\ Judge~2 (Sonnet): $r = 0.505$
-  \item Judge~1 (Opus) vs.\ Judge~3 (Haiku): $r = 0.242$
-  \item Judge~2 (Sonnet) vs.\ Judge~3 (Haiku): $r = 0.185$
+  \item Judge~1 (Opus) vs.\ Judge~2 (Sonnet): $r = 0.588$
+  \item Judge~1 (Opus) vs.\ Judge~3 (Haiku): $r = 0.310$
+  \item Judge~2 (Sonnet) vs.\ Judge~3 (Haiku): $r = 0.257$
 \end{itemize}
 
 The discrepancy between Spearman and Pearson correlations (particularly for
-Opus--Sonnet: $\rho = 0.125$ vs.\ $r = 0.505$) suggests a non-linear
+Opus--Sonnet: $\rho = 0.177$ vs.\ $r = 0.588$) suggests a non-linear
 relationship between judge scores. The moderate Pearson correlation may
 reflect shared calibration of score scale (both judges tend to use similar
 score ranges) even though they disagree on which outputs deserve high vs.\
@@ -1255,28 +1442,42 @@ low scores.
   \caption{Judge agreement scatter plots for T0 and T3. Each point represents
     a run, with axes showing scores from different judge pairs. The wide
     scatter and lack of diagonal clustering illustrate the low inter-rater
-    reliability across both high-performing (T0) and low-performing (T3)
-    tiers.}
+    reliability across both simple (T0) and delegation-based (T3) tiers.}
   \label{fig:judge_agreement}
 \end{figure}
 
 \subsection{Judge Bias}
 \label{sec:judge_bias}
 
+\subsubsection{Directional Bias}
+
+Examination of raw score distributions reveals directional scoring tendencies
+across the panel. Opus (Judge~1) and Sonnet (Judge~2) tend to produce broadly
+similar score levels, while Haiku (Judge~3) diverges. On tasks where the
+frontier judges assign high scores, Haiku tends to score lower; conversely,
+on tasks where frontier judges identify deficiencies, Haiku sometimes assigns
+higher scores. This bidirectional disagreement---rather than a consistent
+upward or downward bias---explains why pairwise Spearman correlations
+involving Haiku are weaker ($\rho = 0.111$ and $\rho = 0.084$) than the
+Opus--Sonnet pair ($\rho = 0.177$).
+
+\subsubsection{Mean Absolute Differences}
+
 The mean absolute score differences reveal a systematic pattern in which
 disagreement scales with the capability gap between judges:
 
 \begin{itemize}
-  \item Judge~1 (Opus) vs.\ Judge~2 (Sonnet): mean $|\Delta| = 0.089$
-  \item Judge~1 (Opus) vs.\ Judge~3 (Haiku): mean $|\Delta| = 0.210$
-  \item Judge~2 (Sonnet) vs.\ Judge~3 (Haiku): mean $|\Delta| = 0.270$
+  \item Judge~1 (Opus) vs.\ Judge~2 (Sonnet): mean $|\Delta| = 0.0738$
+  \item Judge~1 (Opus) vs.\ Judge~3 (Haiku): mean $|\Delta| = 0.1683$
+  \item Judge~2 (Sonnet) vs.\ Judge~3 (Haiku): mean $|\Delta| = 0.2186$
 \end{itemize}
 
 The two most capable models (Opus and Sonnet) agree most closely, with a mean
-absolute difference of only 0.089 on a $[0, 1]$ scale. As the capability gap
-increases, disagreement grows: Opus and Haiku disagree by 0.210, while Sonnet
-and Haiku---the pair with the most divergent capability levels after accounting
-for the specific evaluation task---disagree by 0.270.
+absolute difference of only 0.074 on a $[0, 1]$ scale. As the capability gap
+increases, disagreement grows: Opus and Haiku disagree by 0.168, while Sonnet
+and Haiku disagree most at 0.219.
+
+\subsubsection{Capability-Gap Hypothesis}
 
 This monotonic relationship between capability gap and disagreement is
 consistent with the hypothesis that the budget model lacks sufficient
@@ -1286,15 +1487,36 @@ different evaluation criteria, assigning scores based on surface features
 assessments (e.g., correctness, completeness, adherence to specifications)
 performed by the frontier judges.
 
+\subsubsection{Consensus Scoring and Signal Loss}
+
 The near-zero Krippendorff's $\alpha$ raises a methodological concern that
 affects the interpretation of all results in this paper. If the judges do not
 agree, then the consensus score (arithmetic mean) may not be a reliable
 measure of output quality. The mean of disagreeing judges produces a
 compromise value that no individual judge endorses, potentially masking
-genuine quality differences between tiers. However, the pass rate metric
-(which uses majority vote over each judge's individual binary classification)
-may be more robust to this issue, as it requires only that a majority of
-judges agree on a pass/fail outcome rather than precisely calibrated scores.
+genuine quality differences between tiers.
+
+This problem is well-known in measurement theory: when raters hold
+fundamentally different positions, averaging their scores produces a
+compromise value that no individual rater endorses and obscures the
+underlying disagreement. A consensus score of 0.7 might represent unanimous
+moderate agreement---or it might represent one judge scoring 0.95 and
+another scoring 0.45, a situation where the average conceals a substantive
+disagreement about output quality.
+
+The implementation rate metric already uses median-based consensus (the median
+of three judges' binary assessments), which is more robust to a single
+outlier judge than the arithmetic mean. Extending median-based aggregation to
+continuous scores---or adopting trimmed means that exclude the most extreme
+judge---may provide more robust quality measurement when inter-rater
+reliability is poor. However, with only three judges, trimming reduces the
+panel to a single judge, so expanding the panel size would be a prerequisite
+for robust trimmed-mean approaches.
+
+The pass rate metric (which uses majority vote over each judge's individual
+binary classification) may be the most robust aggregation in this study, as
+it requires only that a majority of judges agree on a pass/fail outcome
+rather than precisely calibrated scores.
 
 % ===================================================================
 % 7. COST ANALYSIS
@@ -1311,46 +1533,46 @@ statistics.
 
 \input{tables/tab05_cost_analysis}
 
-The aggregate Cost-of-Pass ranges from \$0.11 (T2) to \$0.22 (T6). This
-variation is driven entirely by the denominator (pass rate) rather than the
+The aggregate Cost-of-Pass ranges from \$0.11 (T2) to \$0.16 (T6). This
+variation is driven primarily by the denominator (pass rate) rather than the
 numerator (mean cost), since mean cost per run is effectively constant across
-tiers (\$0.11--\$0.15). Applying Equation~\ref{eq:cop}, the CoP for T6 is
-elevated because its lower pass rate (0.667) divides a slightly higher mean
-cost (\$0.15), yielding \$0.22 per successful outcome.
+tiers (\$0.11--\$0.16). Applying Equation~\ref{eq:cop}, the CoP for T6 is
+slightly elevated because its higher mean cost (\$0.16 vs.\ \$0.11--\$0.12
+for other tiers) is the primary driver, despite T6 achieving the highest
+pass rate (1.000).
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{fig06_cop_by_tier.png}
-  \caption{Cost-of-Pass by tier. The increasing CoP from T2 to T6 reflects
-    declining pass rates rather than increasing costs. T2 achieves the
-    minimum CoP at \$0.11, making it the most cost-efficient tier in the
-    aggregate.}
+  \caption{Cost-of-Pass by tier. The modest CoP variation across tiers
+    reflects minor differences in pass rates rather than meaningful cost
+    differences. T2 achieves the minimum CoP at \$0.11, making it the most
+    cost-efficient tier in the aggregate.}
   \label{fig:cop_by_tier}
 \end{figure}
 
-T2 (Tooling) achieves the lowest aggregate CoP at \$0.11, making it the
-apparent Pareto-optimal tier in the aggregate data: it has both the highest
-aggregate pass rate (0.978) and the lowest cost-of-pass, though the optimal
-tier varies by task (Section~\ref{sec:interaction}). (Cost invariance is a
-non-significant finding under limited power; real cost differences between
-tiers may exist below our ability to detect.) T1 (Skills) is a close second with CoP \$0.12
-and pass rate 0.967. The frontier CoP across all tiers and experiments is
-\$0.113.
+T2 (Tooling) achieves the lowest aggregate CoP at \$0.11, though all tiers
+fall within a narrow range (\$0.11--\$0.16). The overall pass rate of 0.966
+means that most tier--experiment combinations achieve near-perfect pass rates,
+compressing the CoP range. (Cost invariance is a non-significant finding under
+limited power; real cost differences between tiers may exist below our ability
+to detect.)
 
-The practical implication is clear: for budget models on the tasks studied,
-the optimal strategy is to equip the agent with tools (T2) but not delegation
-or orchestration. This configuration maximizes quality while minimizing the
-expected cost per successful outcome.
+The practical implication is that, given no significant tier effect on pass
+rate ($H(6)=8.53$, $p=0.2015$), the simplest tier configuration suffices.
+Organizations need not invest in complex delegation or orchestration
+architectures for the budget model and tasks studied here, as the additional
+complexity provides no detectable benefit.
 
 \subsection{Cost Scaling with Task Difficulty}
 \label{sec:cost_scaling}
 
 Cost varies dramatically by experiment but not by tier. The mean cost per run
-ranges from \$0.038 for test-001 (trivial Python) to \$0.226 for test-002
-(moderate Mojo), with test-003 (moderate Python configuration) at \$0.076.
-The Kruskal--Wallis test shows a highly significant experiment effect on
-cost ($H = 903.1$, $p < 0.001$) but no significant tier effect
-($H = 4.0$, $p = 0.676$).
+ranges from \$0.04 for test-001 (trivial Python) to \$0.23 for test-002
+(moderate Mojo), with test-003 (moderate Python configuration) at \$0.08.
+The SRH analysis shows a highly significant experiment effect on
+cost ($H(2) = 903.1$, $p < 0.001$) but no significant tier effect
+($H(6) = 4.0$, $p = 0.676$).
 
 \begin{figure}[htbp]
   \centering
@@ -1387,23 +1609,17 @@ frontier across all tier $\times$ experiment combinations.
   \caption{Cost--quality Pareto frontier. Each point represents a
     tier--experiment combination, plotted by mean cost per run (x-axis, log
     scale) and mean consensus score (y-axis). Pareto-optimal points lie on
-    the upper-left frontier. T0--T2 configurations dominate the frontier
-    across all experiments; T4--T6 for test-001 cluster at low quality with
-    non-zero cost.}
+    the upper-left frontier. The narrow spread of points reflects the
+    overall high pass rate (0.966) and cost invariance across tiers.}
   \label{fig:cost_quality_pareto}
 \end{figure}
 
-The Pareto frontier is dominated by T0--T2 configurations across all three
-experiments. No T4--T6 configuration appears on the Pareto frontier for any
-experiment. T3 appears on the frontier only for test-002, where its mean
-score is competitive with T2.
+The Pareto frontier is relatively flat, reflecting the high overall pass rate
+(0.966) and narrow cost range across tiers. Most tier--experiment combinations
+cluster in a similar region of the cost--quality space, consistent with the
+non-significant tier effects on both pass rate and cost.
 
-The test-001 T4--T6 points (zero pass rate, non-zero cost) represent the
-worst possible outcome: the organization pays for computation but receives
-no useful output. These configurations are not merely suboptimal---they
-are wasteful, consuming budget without any return.
-
-The total experimental cost of \$122.31 across 1,080 runs yields a mean cost
+The total experimental cost of \$123.30 across 1,080 runs yields a mean cost
 of \$0.11 per run. This shows that meaningful ablation studies can be
 conducted at modest cost using budget models, making the Scylla framework
 accessible for iterative evaluation during development cycles rather than
@@ -1423,73 +1639,55 @@ between architectural complexity and budget model performance. We organize
 these findings around the four research questions posed in
 Section~\ref{sec:introduction}.
 
-\textbf{Finding 1 (RQ1): In this study, the T2--T3 boundary is the sharpest transition.} The
-introduction of delegation at T3 is associated with a statistically significant drop in
-aggregate pass rate from 0.978 to 0.759 (Cliff's $\delta = -0.219$,
-$p < 0.001$). This is the largest single-step degradation in the tier
-hierarchy and represents the transition from individual agent execution to
-multi-agent coordination. For the budget model studied, the introduction of delegation is associated
-with substantial performance degradation. One plausible mechanism is that
-coordination overhead consumes reasoning resources that would otherwise be
-applied to the task, though the confounded tier design (Section~\ref{sec:threats})
-does not allow definitive causal attribution.
+\textbf{Finding 1 (RQ1): In this study, no significant tier effect on pass rate is detected.}
+The Kruskal--Wallis test on pass rate yields $H(6)=8.53$, $p=0.2015$, which
+does not reach significance at the $\alpha=0.05$ level. The overall pass rate
+of 0.966 across all tiers indicates that the budget model performs well
+regardless of architectural configuration. While individual tier--experiment
+combinations show some variation, the aggregate data provide no evidence that
+adding delegation, hierarchy, or hybrid configurations improves or degrades
+pass rate for the tasks studied. Given the small sample size ($N=3$ per
+subtest), this null result should be interpreted cautiously---real but small
+tier effects may exist below our statistical power to detect.
 
-The subsequent T3--T4 transition (Cliff's $\delta = -0.116$, small-to-negligible
-effect by conventional thresholds; see Appendix~\ref{app:statistical_details})
-suggests possible further degradation from adding hierarchical orchestration
-on top of delegation, though this comparison does not reach significance after
-Holm--Bonferroni correction ($p = 0.058$). The cumulative effect of moving from T2 to T6 is a
-drop in pass rate from 0.978 to 0.667---a loss of approximately one-third of
-the base capability.
+\textbf{Finding 2 (RQ2): In this study, task-dependent effects dominate tier effects.}
+The significant SRH interaction effect on score ($H(12) = 223.5$, $p < 0.001$)
+is the central finding of the cross-task analysis. Both the tier main effect
+($H(6) = 91.3$, $p < 0.001$) and experiment main effect ($H(2) = 178.2$,
+$p < 0.001$) are significant on the continuous score metric, though their raw
+$H$-values are not directly comparable across different degrees of freedom.
+The highly significant interaction indicates that the \emph{combination} of
+tier and task determines quality beyond either factor alone. However, this
+tier effect on continuous scores does not translate to a significant effect on
+the binary pass rate metric ($H(6)=8.53$, $p=0.2015$), suggesting that
+score-level differences are too small to cross the pass/fail threshold
+consistently.
 
-\textbf{Finding 2 (RQ1): In this study, architectural over-specification is associated with catastrophic
-failure on the trivial Python task.} The zero pass rate for T4--T6 on test-001 is the
-most striking individual result in the study. A task that the bare model
-handles with 95.8\% pass rate becomes completely unsolvable when wrapped in
-hierarchical delegation. This suggests that budget models may be unable to
-simultaneously manage coordination overhead and task execution, even when
-the task itself is trivial. The coordination overhead appears to exceed a
-threshold beyond which task completion is entirely prevented, rather than
-merely degrading performance incrementally. However, the specific failure
-mechanism cannot be determined from observational data alone.
+\textbf{Finding 3 (RQ3): In this study, no significant cost variation across tiers is detected.}
+Cost-of-Pass ranges from \$0.11 at T2 to \$0.16 at T6, driven by minor
+differences in pass rates rather than rising per-run costs. The non-significant
+tier effect on cost ($H(6) = 4.00$, $p = 0.676$) provides no evidence of a
+cost--quality trade-off under current statistical power. Since neither pass
+rate nor cost varies significantly by tier, the tiers are effectively
+interchangeable on the tasks studied.
 
-\textbf{Finding 3 (RQ2): In this study, tier effects are task-dependent.} The significant
-SRH interaction effect ($H = 223.5$, $df=12$, $p < 0.001$) is the central finding of
-the cross-task analysis. All three effects---interaction, tier main effect
-($H = 91.3$, $df=6$), and experiment main effect ($H = 178.2$, $df=2$)---are
-significant at $p < 0.001$, though their raw $H$-values are not directly
-comparable across different degrees of freedom. The highly significant
-interaction indicates that
-the \emph{combination} of tier and task determines quality beyond
-either factor alone. This means there is no universally optimal tier: the best
-architecture depends on the task. For trivial tasks, T0--T2 are clearly
-superior; for moderate tasks, the tiers are more interchangeable, with some
-evidence that higher tiers provide marginal benefits. (Note that this finding
-is derived from continuous score data; given the low inter-rater reliability
-($\alpha = -0.030$), the pass-rate-based KW analysis ($H(6)=119.01$, $p<0.001$)
-provides independent, more robust confirmation of tier-dependent effects.)
-
-\textbf{Finding 4 (RQ3): In this study, no significant cost variation across tiers is detected.}
-Cost-of-Pass ranges from \$0.11 at T2 to \$0.22 at T6, driven by declining
-pass rates rather than rising per-run costs. The non-significant tier effect
-on cost ($p = 0.676$) provides no evidence of a cost--quality trade-off under
-current statistical power. If higher tiers provided cost savings (e.g., by solving tasks more
-efficiently with fewer tokens), there might be a case for accepting lower
-quality in exchange for lower cost. The absence of detected cost variation
-means that the quality degradation in higher tiers appears as a net loss
-with no detected compensating benefit in the data.
-
-\textbf{Finding 5 (RQ4): In this study, the three-judge panel exhibits near-zero
-reliability.} With Krippendorff's $\alpha = -0.030$, the judge panel produces
-scores that are effectively random relative to each other. The disagreement
+\textbf{Finding 4 (RQ4): In this study, the three-judge panel exhibits poor
+reliability.} With Krippendorff's $\alpha = 0.034$, the judge panel produces
+scores that are barely above chance agreement. The disagreement
 is structured: the two frontier judges (Opus and Sonnet) show the smallest
-pairwise disagreement (mean $|\Delta| = 0.089$, though Spearman
-$\rho = 0.125$ indicates weak rank agreement), while the budget judge
-(Haiku) disagrees
-substantially with both (mean $|\Delta| = 0.210$ and $0.270$). This suggests
-that including a budget model in the judge panel introduces noise rather than
-signal, and that a two-judge panel of frontier models might provide more
-reliable evaluation.
+pairwise disagreement (mean $|\Delta| = 0.074$, Spearman $\rho = 0.177$),
+while the budget judge (Haiku) disagrees substantially with both
+(mean $|\Delta| = 0.168$ and $0.219$). This suggests that including a budget
+model in the judge panel introduces noise rather than signal, and that a
+two-judge panel of frontier models might provide more reliable evaluation.
+
+\textbf{Finding 5: Practical implication---the simplest tier suffices.} Since
+no significant tier effect is detected on either pass rate or cost, the
+practical recommendation is straightforward: organizations deploying the budget
+model on tasks of comparable complexity should use the simplest architecture
+that meets their requirements. Additional complexity (delegation, hierarchy,
+hybrid configurations) provides no detectable benefit in this study and adds
+operational overhead in configuration and maintenance.
 
 \subsection{Practical Implications}
 \label{sec:practical_implications}
@@ -1497,38 +1695,31 @@ reliable evaluation.
 These findings have several practical implications for organizations deploying
 agentic coding systems with budget models.
 
-\textbf{Architecture selection should be conservative.} Based on the tasks
-studied here, the default recommendation for budget model deployments is to
-use T2 (Tooling) as the baseline architecture. This configuration provides
-the agent with external tools and MCP servers while avoiding the delegation
-overhead that degrades aggregate performance. T2 achieves the highest
-aggregate pass rate (0.978) and the lowest Cost-of-Pass (\$0.11), though the
-optimal tier varies by task (Section~\ref{sec:interaction}).
+\textbf{Tier equivalence favors simplicity.} Since no significant tier effect
+is detected on pass rate ($p=0.2015$) or cost ($p=0.676$), the practical
+recommendation is to use the simplest architecture that meets operational
+requirements. For the budget model and tasks studied here, T0 (prompt-only)
+achieves comparable results to T6 (everything enabled). The additional
+engineering effort to configure delegation, hierarchy, and hybrid
+architectures provides no detectable benefit in task success.
 
-\textbf{Avoid delegation for simple tasks.} When the task complexity is low
-(comparable to test-001), delegation-based architectures should be avoided
-entirely. The catastrophic failure of T4--T6 on the trivial Python task
-suggests that architectural over-specification is not merely wasteful but
-actively harmful. A simple diagnostic: if the task can be described in a
-single sentence, delegation is unlikely to help with a budget model.
+\textbf{Task characteristics dominate architecture.} The significant SRH
+interaction effect on score ($p < 0.001$) indicates that task selection
+matters more than architectural configuration. Organizations seeking to
+improve agent performance should focus on task decomposition and prompt
+engineering rather than architectural complexity. The variation in pass rate
+across experiments (driven by task difficulty) exceeds the variation across
+tiers within any single experiment.
 
-\textbf{Task classification could guide tier selection.} The significant
-interaction effect implies that a static tier recommendation is suboptimal.
-Organizations could investigate a lightweight task classifier that selects
-T1--T2 for simple tasks and considers T3 only for tasks where genuine
-decomposition benefits are expected. However, this recommendation is
-speculative given the 3-task basis of the current study; a functional
-classifier would require training data from a larger task set.
-
-\textbf{Judge panel composition matters.} The near-zero inter-rater
-reliability suggests that organizations using LLM-as-judge evaluation should
-carefully consider panel composition. Including budget models as judges
-introduces noise that may obscure real quality differences. A two-judge
-panel of frontier models may provide more reliable evaluation despite the
-higher per-evaluation cost.
+\textbf{Judge panel composition matters.} The poor inter-rater
+reliability ($\alpha = 0.034$) suggests that organizations using
+LLM-as-judge evaluation should carefully consider panel composition.
+Including budget models as judges introduces noise that may obscure real
+quality differences. A two-judge panel of frontier models may provide more
+reliable evaluation despite the higher per-evaluation cost.
 
 \textbf{Budget models are cost-competitive for evaluation.} The total cost
-of \$122.31 for 1,080 runs shows that systematic architectural
+of \$123.30 for 1,080 runs shows that systematic architectural
 evaluation is affordable with budget models. Organizations can conduct their
 own ablation studies during development cycles rather than relying on
 published benchmarks that may not reflect their specific use cases.
@@ -1541,17 +1732,14 @@ on a single Hello World task. While direct comparison is limited by
 differences in model, task set, and experimental scale, several contrasts
 are noteworthy.
 
-The dryrun found a similar pattern of degradation in higher tiers, suggesting
-that the non-monotonic tier--quality relationship may be a general phenomenon
-rather than specific to budget models. However, the severity of the
-degradation appears to be model-dependent: the frontier model in the dryrun
-maintained partial performance in delegation tiers, whereas the budget model
-in this study exhibits complete failure on the trivial task.
-
-This comparison, while informal, suggests that the T2--T3 degradation may be
-\emph{steeper} for budget models than for frontier models---a hypothesis
-that could be tested formally in a cross-model study using the same
-experimental design.
+The dryrun found a pattern of degradation in higher tiers, whereas the
+current study finds no significant tier effect on pass rate. This discrepancy
+may reflect differences in the model under study (Sonnet 4.5 vs.\ Haiku 4.5),
+the expanded task set (three experiments vs.\ one), or the increased
+statistical rigor of the current design. The comparison highlights the
+importance of multi-task evaluation: findings from a single task may not
+generalize, and the apparent tier effects in the dryrun may have been
+task-specific rather than architectural.
 
 \subsection{Limitations}
 \label{sec:limitations}
@@ -1561,10 +1749,13 @@ generalizability of our findings:
 
 \textbf{Small sample size.} With $N=3$ replications per subtest, our
 statistical power is limited. Bootstrap confidence intervals are necessarily
-wide (e.g., the T6 pass rate CI spans $[0.333, 0.889]$), and individual
-outlier runs can substantially influence subtest-level statistics. The results
-should be treated as preliminary evidence requiring confirmation with larger
-sample sizes ($N \geq 10$).
+wide (e.g., the T6 pass rate CI spans $[0.664, 1.000]$), and individual
+outlier runs can substantially influence subtest-level statistics. A formal post-hoc power analysis would help
+quantify the risk of Type~II error for the null pass rate result; however,
+the non-standard distribution of pass rates (bounded, heavily right-skewed)
+complicates standard power calculations. The results should be treated as
+preliminary evidence requiring confirmation with larger sample sizes
+($N \geq 10$).
 
 \textbf{Single model family.} All experiments use models from the Anthropic
 Claude family. The findings may not generalize to other model families (e.g.,
@@ -1578,31 +1769,26 @@ the task space. All three tasks are relatively simple by software engineering
 standards---none involves multi-file refactoring, complex debugging, or
 large-scale system design. The tier effects observed here may not hold for
 more complex tasks where delegation could provide genuine coordination value
-that offsets the overhead costs.
+that offsets the overhead costs. Relatedly, the high pass rates across all
+tiers (0.903--1.000) introduce a ceiling effect that limits statistical power
+to detect tier differences on the binary pass/fail metric. The non-significant
+Kruskal--Wallis result on pass rate may partly reflect this restricted range
+rather than true tier equivalence.
 
-\textbf{Judge reliability concerns.} The near-zero inter-rater reliability
-undermines confidence in the quality scores. While the pass rate metric
-(which uses majority vote) is less sensitive to score miscalibration,
-the continuous score and CoP metrics may be substantially affected by judge
-disagreement. All findings based on continuous scores should be interpreted
-with this caveat in mind.
+\textbf{Judge reliability concerns.} The poor inter-rater reliability
+($\alpha = 0.034$) undermines confidence in the quality scores. While the
+pass rate metric (which uses majority vote) is less sensitive to score
+miscalibration, the continuous score and CoP metrics may be substantially
+affected by judge disagreement. All findings based on continuous scores
+should be interpreted with this caveat in mind.
 
-\textbf{Incomplete evaluation coverage.} Of the 3,240 expected judge
-evaluations (1,080 runs $\times$ 3 judges), only 2,696 (83.2\%) are present.
-The shortfall is concentrated in test-001, where T4--T6 have zero judge
-evaluations. In total, 170 of 1,080 runs lack any judge evaluation
-whatsoever; scores for these runs were assigned by the pipeline as~$0$
-when no evaluable output was produced, rather than by explicit judge
-assessment. This means the inter-rater reliability statistics
-($\alpha = -0.030$) are computed on the available subset and may not
-generalize to the full design matrix. Specifically, the complete absence of
-T4--T6 evaluations for test-001 introduces a systematic selection bias: the
-available data overrepresents tiers where the agent produced evaluable output
-(T0--T3) and underrepresents complete-failure runs. If T4--T6 failures would
-have produced uniformly low scores across all three judges, their inclusion
-would likely reduce disagreement (and thus increase $\alpha$). The reported
-$\alpha = -0.030$ should therefore be interpreted as a lower bound on judge
-reliability for the evaluable subset only.
+\textbf{Evaluation coverage.} Of the 3,240 expected judge
+evaluations (1,080 runs $\times$ 3 judges), 3,210 (99.1\%) are present,
+with 30 individual judge slots missing across 30 runs (each missing
+exactly one of three judges). The inter-rater
+reliability statistics ($\alpha = 0.034$) are computed on this near-complete
+dataset. The reported
+$\alpha = 0.034$ should therefore be interpreted with this caveat in mind.
 
 \textbf{Confounded tier composition.} The tiers are not pure factorial
 manipulations---each tier includes the capabilities of previous tiers. T3
@@ -1649,8 +1835,9 @@ statistical basis for inference about ``everything enabled'' configurations.
 risk of both Type~I errors (finding spurious effects) and Type~II errors
 (missing real effects). The use of non-parametric tests and conservative
 correction methods (Holm--Bonferroni) mitigates the former, but the latter
-remains a concern, particularly for the cost and implementation rate analyses
-where real but small effects may be undetectable with $N=3$.
+remains a concern. The non-significant tier effect on pass rate ($p=0.2015$)
+may reflect either true tier equivalence or insufficient power to detect
+small effects with $N=3$.
 
 % ===================================================================
 % 9. CONCLUSIONS
@@ -1661,39 +1848,35 @@ where real but small effects may be undetectable with $N=3$.
 This study presents, to our knowledge, the first multi-task ablation of
 agentic coding architectures using a budget frontier model (\texttt{claude-haiku-4-5}).
 Across 1,080 runs spanning three experiments, seven tiers, and 120 subtests
-at a total cost of \$122.31, we find preliminary evidence for a non-monotonic
-relationship between architectural complexity and task performance.
+at a total cost of \$123.30, we find no significant tier effect on pass rate
+($H(6)=8.53$, $p=0.2015$) and an overall pass rate of 0.966.
 
-The central finding is that \emph{simpler is better} for the budget model
-studied. In the aggregate data, tiers T0--T2 outperform
-tiers T3--T6 in both pass rate and score, with the T2--T3 transition representing
-the sharpest degradation point, where multi-agent delegation is introduced. However,
-task-dependent reversals occur (e.g., T6 achieves the highest pass rate on test-002).
+The central finding is that \emph{tiers are equivalent} for the budget model
+and tasks studied. All seven architectural configurations---from bare prompts
+(T0) through full capability stacking (T6)---achieve comparable pass rates.
+The additional complexity of delegation, hierarchy, and hybrid architectures
+provides no detectable benefit over simpler configurations.
 
-Crucially, this degradation is task-dependent: the significant SRH interaction
-effect indicates there is no universally optimal tier. On the trivial Python task,
-hierarchical architectures fail catastrophically (zero pass rate for T4--T6); on
-moderate tasks, all tiers achieve acceptable performance with muted differences.
-This interaction should temper aggregate-level recommendations---the ``best'' tier
-depends on the task.
+Task-dependent effects dominate tier effects: the significant SRH interaction
+on continuous scores ($H(12) = 223.5$, $p < 0.001$) indicates that the
+combination of tier and task determines quality, but these score-level
+differences do not translate to significant pass rate variation. Cost is
+similarly invariant across tiers ($H(6) = 4.00$, $p = 0.676$), reinforcing
+the conclusion that architectural complexity provides no advantage.
 
-Observed cost invariance across tiers ($p=0.676$, non-significant under
-limited power) suggests no cost--quality trade-off, making higher tiers
-effectively Pareto-dominated in aggregate. T2 (Tooling) appears as the
-highest-pass-rate Pareto-optimal tier in the aggregate data (T0 and T1 also
-lie on the Pareto frontier at similar costs), though per-task analysis shows
-the optimal tier varies (e.g., T5 dominates T2 for test-002).
-
-The near-zero inter-rater reliability ($\alpha = -0.030$) of the three-judge
-panel is a methodological finding with implications beyond this study. It
-suggests that LLM-as-judge evaluation requires careful panel composition,
-and that including budget models as judges may undermine measurement
-reliability.
+The poor inter-rater reliability ($\alpha = 0.034$) of the three-judge
+panel is the primary methodological concern. It suggests that LLM-as-judge
+evaluation requires careful panel composition, and that including budget
+models as judges undermines measurement reliability. The structured pattern
+of disagreement---frontier judges agreeing more closely with each other
+(mean $|\Delta| = 0.074$) than with the budget judge (mean $|\Delta| = 0.168$
+and $0.219$)---points to capability-dependent evaluation quality.
 
 These conclusions are necessarily preliminary given the small sample size
 ($N=3$ per subtest), limited task diversity, and single-model-family scope.
 We present them as directional evidence that should motivate larger-scale
-studies with broader task coverage and cross-model comparisons.
+studies with broader task coverage, cross-model comparisons, and improved
+judge calibration.
 
 % ===================================================================
 % 10. FURTHER WORK
@@ -1711,20 +1894,20 @@ where variance is highest, optimizing the information gained per dollar spent.
 
 \textbf{Cross-model comparison.} Applying the same experimental design to
 frontier models (e.g., \texttt{claude-opus-4-6}, \texttt{claude-sonnet-4-6})
-would reveal whether the non-monotonic tier--quality relationship is specific
-to budget models or generalizes across the capability spectrum. The prior
+would reveal whether the tier equivalence observed here is specific to the
+budget model or generalizes across the capability spectrum. The prior
 Scylla dryrun~\cite{scylla2026dryrun} used Sonnet 4.5 on a single task,
 providing a starting point for this comparison. Of particular interest is
-whether frontier models exhibit a T2--T3 performance drop at all, or whether their
-greater reasoning capacity enables them to manage delegation overhead
-without quality loss.
+whether frontier models show significant tier differentiation where the
+budget model does not, suggesting that tier effects may emerge only when
+model capacity is sufficient to exploit architectural complexity.
 
 \textbf{Task difficulty scaling.} Extending the experiment set to include
 harder tasks (multi-file refactoring, complex debugging, system design) would
-test the hypothesis that delegation-based architectures become beneficial only
-when task complexity exceeds the individual model's capacity. A crossover
-point---the task complexity at which delegation begins to help rather than
-hurt---would provide practical guidance for architectural selection.
+test whether tier differentiation emerges at higher task complexity. If
+delegation-based architectures become beneficial only when task complexity
+exceeds the individual model's capacity, a crossover point may exist that
+would provide practical guidance for architectural selection.
 
 \textbf{Judge panel calibration.} The poor inter-rater reliability motivates
 investigation of alternative judge panel compositions. Options include:
@@ -1742,10 +1925,11 @@ meta-agent could be trained on the data from this and future studies,
 learning to predict which architectural configuration will maximize pass rate
 for a given task description.
 
-\textbf{Cost optimization.} While no significant cost difference across tiers was detected in our data, the
-total cost of \$122.31 for 1,080 runs suggests room for efficiency gains
-through prompt caching optimization, reduced context windows for simple tasks,
-or selective evaluation (running fewer subtests for well-characterized tiers).
+\textbf{Cost optimization.} While no significant cost difference across tiers
+was detected in our data, the total cost of \$123.30 for 1,080 runs suggests
+room for efficiency gains through prompt caching optimization, reduced context
+windows for simple tasks, or selective evaluation (running fewer subtests for
+well-characterized tiers).
 
 \textbf{Longitudinal stability.} Repeating the experiments periodically would
 reveal whether the tier--quality relationships are stable over time or shift
@@ -1757,12 +1941,12 @@ families (OpenAI, Google, Meta) would test whether the findings are specific
 to Claude's architecture or reflect general properties of budget-class LLMs
 in agentic settings.
 
-\textbf{Delegation protocol optimization.} The catastrophic failure of
-delegation-based tiers on trivial tasks suggests that the delegation protocol
-itself may be suboptimal for budget models. Research into lightweight
-delegation protocols---simpler handoff mechanisms, reduced coordination
-overhead, or asynchronous delegation---could potentially recover some of the
-lost performance while preserving the benefits of task decomposition.
+\textbf{Delegation protocol optimization.} Although no significant tier
+degradation was observed in aggregate, the delegation protocol may still
+be suboptimal for budget models. Research into lightweight delegation
+protocols---simpler handoff mechanisms, reduced coordination overhead, or
+asynchronous delegation---could reveal whether delegation benefits emerge
+with more efficient coordination mechanisms.
 
 \textbf{Fine-grained tier decomposition.} The current T3 tier groups 41
 subtests that represent different delegation configurations. A more
@@ -1779,7 +1963,7 @@ architectural recommendations.
 This research was conducted using the Scylla evaluation framework as part of
 the Homeric Intelligence ecosystem. The author thanks the Claude Code team at
 Anthropic for providing the agentic CLI infrastructure used in all experiments.
-All evaluation costs (\$122.31) were borne by the author. No external funding
+All evaluation costs (\$123.30) were borne by the author. No external funding
 was received for this work.
 
 % ===================================================================
@@ -1894,9 +2078,9 @@ a specific tier and experiment, showing the pass rate, mean score, standard
 deviation, cost, letter grade, and grade distribution across the $N=3$ runs.
 
 The table reveals the granular patterns that drive the aggregate findings
-discussed in the main text. In particular, the clustering of F grades in
-T3--T6 for test-001 is visible at the subtest level, confirming that the
-failures are systematic rather than driven by a few outlier subtests.
+discussed in the main text. The high overall pass rate (0.966) is visible
+at the subtest level, with most tier--experiment combinations achieving
+A or S grades.
 
 \input{tables/tab07_subtest_detail}
 
@@ -1908,18 +2092,21 @@ failures are systematic rather than driven by a few outlier subtests.
 
 All statistical analyses in this paper employ non-parametric methods. This
 methodological choice is justified by Shapiro--Wilk normality tests, which
-reject the normality assumption for all 14 tier $\times$ \{Score, Cost\} combinations
-at the $\alpha = 0.05$ significance level (Table~\ref{tab:normality_tests}).
+reject the normality assumption for 13 of 14 tier $\times$ \{Score, Cost\}
+combinations at the $\alpha = 0.05$ significance level
+(Table~\ref{tab:normality_tests}). The sole exception is T6 Cost ($n=9$,
+$p=0.069$), where the small sample size limits test power.
 
 \input{tables/tab10_normality_tests}
 
-The universal rejection of normality ($p < 0.05$ for all combinations, and
-$p < 0.001$ for all combinations with $n > 9$) reflects the bounded and often
-bimodal nature of the score distributions. Scores cluster near 0.0 (complete
-failure) and 0.8--1.0 (successful completion), with relatively few
-observations in the intermediate range. This distributional shape is expected
-for pass/fail-oriented coding tasks: the agent either accomplishes the task
-(yielding a high score) or fails to accomplish it (yielding a score near zero).
+The near-universal rejection of normality ($p < 0.05$ for 13/14 combinations,
+and $p < 0.001$ for all combinations with $n > 9$) reflects the bounded and often
+non-normal nature of the score distributions. Scores are concentrated in the
+0.7--1.0 range (successful completion), with a long left tail reflecting
+occasional lower-quality outputs. This distributional shape is expected
+for pass/fail-oriented coding tasks where the agent succeeds on the majority
+of runs: the bounded score range and concentration at high values produce
+strong negative skew rather than a symmetric bell curve.
 
 Cost distributions are also non-normal, exhibiting right skew due to
 occasional runs that require substantially more tokens than average. The
@@ -1928,7 +2115,30 @@ non-normality of all metrics motivates the use of rank-based tests
 the analysis rather than parametric alternatives (ANOVA, $t$-tests).
 
 % -------------------------------------------------------------------
-% APPENDIX D: Statistical Test Details
+% APPENDIX D: Per-Criteria Performance
+% -------------------------------------------------------------------
+\section{Per-Criteria Performance}
+\label{app:criteria_performance}
+
+Table~\ref{tab:criteria_performance} presents the per-criterion performance
+across the five standard evaluation criteria. The criteria are weighted
+according to their contribution to the overall score, with functional
+correctness receiving the highest weight (0.35). The results reflect
+primarily test-001 data, where judges consistently produced all five
+standard criteria.
+
+\input{tables/tab04_criteria_performance}
+
+Functional correctness has the lowest mean score ($0.891 \pm 0.239$) and
+highest variance, consistent with its role as the most demanding criterion.
+Code quality, proportionality, and build pipeline all achieve means above
+0.96, indicating that the budget model consistently produces well-structured
+and correctly scoped outputs. The overall quality criterion (mean $0.926 \pm
+0.099$) provides a holistic assessment that synthesizes the individual
+criteria.
+
+% -------------------------------------------------------------------
+% APPENDIX E: Statistical Test Details
 % -------------------------------------------------------------------
 \section{Statistical Test Details}
 \label{app:statistical_details}
@@ -1955,58 +2165,42 @@ distribution with $k-1 = 6$ degrees of freedom.
     \toprule
     Metric & Source & $H(6)$ & $p$-value & Sig? \\
     \midrule
-    Pass Rate       & KW     & 119.01 & $<0.001$ & *** \\
-    Impl Rate       & KW     &   5.47 & 0.486    & n.s. \\
-    Duration (s)    & KW     &  40.94 & $<0.001$ & *** \\
+    Pass Rate       & KW     &   8.53 & 0.2015   & n.s. \\
+    Impl Rate       & KW     &   5.83 & 0.4423   & n.s. \\
+    Duration (s)    & KW     &   6.74 & 0.3453   & n.s. \\
     Cost (USD)      & SRH    &   4.00 & 0.676    & n.s. \\
     Score           & SRH    &  91.3  & $<0.001$ & *** \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-Three of five metrics show significant tier effects: pass rate, duration, and
-score. The two non-significant metrics---implementation rate and cost---indicate
-that these aspects of agent behavior are determined by task characteristics
-rather than architectural configuration. The agent's decision to attempt the
-task and the resources it consumes are not influenced by whether it operates
-in a single-agent or multi-agent configuration.
+Only the continuous score metric shows a significant tier effect. The four
+remaining metrics---pass rate, implementation rate, duration, and cost---show
+no significant tier effects, indicating that these aspects of agent behavior
+are determined by task characteristics rather than architectural configuration.
+The significant tier effect on score but not on pass rate suggests that while
+tiers produce slightly different score distributions, these differences are
+not large enough to consistently alter pass/fail outcomes.
 
 \subsection{Pairwise Comparisons and Effect Sizes}
 
-For metrics with significant omnibus tests, pairwise comparisons were conducted
-using the Mann--Whitney $U$ test~\cite{mann1947test} with Holm--Bonferroni
-correction~\cite{holm1979simple}. We test 7 planned comparisons (6 adjacent
-transitions plus T0--T6) within each metric family separately, requiring
-correction for multiplicity to control the family-wise error rate within each
-metric. The correction is not applied across metrics, as each metric
-represents a pre-specified hypothesis.
+Pairwise comparisons are conducted only for metrics with significant omnibus
+tests, following the closed testing principle. Since the Kruskal--Wallis tests
+for pass rate ($p=0.2015$), implementation rate ($p=0.4423$), and duration
+($p=0.3453$) are all non-significant, pairwise comparisons were \emph{not
+conducted} for these metrics. Performing pairwise tests after a non-significant
+omnibus test would inflate the Type~I error rate and risks identifying spurious
+differences.
 
-The significant pairwise results for pass rate, with Cliff's $\delta$ effect
-sizes and 95\% bootstrap confidence intervals, are:
-
-\begin{itemize}
-  \item T2 vs.\ T3: $p < 0.001$, Cliff's $\delta = -0.219$ [$-0.268$,
-    $-0.168$]. The negative $\delta$ indicates that T3 pass rates are
-    systematically lower than T2 pass rates. The effect size falls in the
-    ``small'' range by conventional thresholds ($0.11 \leq |\delta| < 0.28$).
-  \item T3 vs.\ T4: Cliff's $\delta = -0.116$ [$-0.212$, $-0.023$]. The
-    further degradation from flat delegation to hierarchical orchestration
-    falls at the boundary of the ``negligible'' and ``small'' ranges
-    ($|\delta|=0.116$ is just above the Romano et al.\ 0.11 threshold;
-    it would be classified as negligible under alternative cutoffs of 0.147).
-  \item T0 vs.\ T6: $p = 0.018$. The overall trend from the simplest tier to
-    the most complex is significantly negative in aggregate, though the
-    pattern is not monotonic across all tasks (test-002 shows a modest
-    positive trend).
-\end{itemize}
-
-For duration, the significant pairwise result is:
-\begin{itemize}
-  \item T2 vs.\ T3: $p = 0.048$, Cliff's $\delta = -0.154$ [$-0.264$,
-    $-0.045$]. T3 runs are stochastically shorter than T2, driven partly
-    by rapid failures of delegation-based tiers on test-001 ($\sim$17\,s
-    vs.\ 430--505\,s for T0--T2).
-\end{itemize}
+For the continuous score metric (significant SRH tier main effect, $H(6)=91.3$,
+$p<0.001$), pairwise comparisons using the Mann--Whitney $U$
+test~\cite{mann1947test} with Holm--Bonferroni correction~\cite{holm1979simple}
+could be conducted to identify which tier pairs differ on score. However, since
+the score metric is subject to poor inter-rater reliability ($\alpha = 0.034$),
+and since score differences do not translate to significant pass rate
+differences, we do not report pairwise score comparisons in detail. The
+significant omnibus effect on score likely reflects minor calibration
+differences across tiers rather than meaningful quality variation.
 
 \subsection{Cliff's $\delta$ Interpretation Scale}
 
@@ -2029,13 +2223,11 @@ scale~\cite{romano2006appropriate} is:
   \item $|\delta| \geq 0.43$: large effect
 \end{itemize}
 
-The T2--T3 comparison ($\delta = -0.219$) falls clearly in the small effect
-range under all conventional thresholds. The T3--T4 comparison ($\delta =
--0.116$) falls at the negligible/small boundary: classified as small under
-the Romano et al.\ (2006) 0.11 threshold but as negligible under alternative
-cutoffs (0.147). Note that this comparison does not reach corrected
-significance ($p = 0.058$ after Holm--Bonferroni correction), so the
-effect should be interpreted cautiously regardless of classification.
+Since the omnibus Kruskal--Wallis test for pass rate is non-significant
+($H(6)=8.53$, $p=0.2015$), Cliff's $\delta$ effect sizes for pairwise tier
+comparisons on pass rate are not reported. Any observed differences would not
+be interpretable as statistically meaningful given the non-significant omnibus
+result.
 
 \subsection{Scheirer--Ray--Hare Details}
 
@@ -2049,8 +2241,8 @@ given the large $N=1{,}080$ and the magnitude of the observed effects, this
 omission does not materially affect the conclusions. For the pass rate
 variable (binary), ties are especially prevalent (each run is either 0 or 1),
 and applying a tie correction to the Kruskal--Wallis $H$ for pass rate would
-increase the test statistic (making results more significant). The reported
-uncorrected $H(6)=119.01$ for pass rate is therefore conservative.
+increase the test statistic. The reported uncorrected $H(6)=8.53$ for pass
+rate ($p=0.2015$) is non-significant regardless of tie correction.
 
 \textbf{Note on T6 sample size.} T6 contributes only $n=9$ runs to the SRH
 analysis (3 runs $\times$ 3 experiments $\times$ 1 subtest). The extreme
@@ -2076,12 +2268,16 @@ $(a-1)(b-1) = (3-1)(7-1) = 12$ interaction contrasts in the $3 \times 7$
 the chi-squared distribution with 12 degrees of freedom produces $p \ll 0.001$,
 indicating that the interaction cannot be attributed to chance.
 
-For cost and implementation rate, the interaction terms are non-significant
-($p = 0.965$ and $p = 0.989$, respectively), indicating that the cost and
-attempt profiles are consistent across experiments regardless of tier.
+For cost, the SRH analysis yields: tier $H(6) = 4.00$, $p = 0.676$;
+experiment $H(2) = 903.1$, $p < 0.001$; interaction $H(12) = 4.79$,
+$p = 0.965$. For implementation rate: tier $H(6) = 5.47$, $p = 0.486$;
+experiment $H(2) = 490.7$, $p < 0.001$; interaction $H(12) = 3.66$,
+$p = 0.989$. The non-significant tier effects and interaction terms for both
+metrics indicate that cost and attempt profiles are determined by task
+characteristics rather than architectural configuration.
 
 % -------------------------------------------------------------------
-% APPENDIX E: Per-Experiment Cost Breakdown
+% APPENDIX F: Per-Experiment Cost Breakdown
 % -------------------------------------------------------------------
 \section{Per-Experiment Cost Breakdown}
 \label{app:cost_breakdown}
@@ -2099,22 +2295,22 @@ distribution of cost across the token usage categories.
     \toprule
     Experiment & Runs & Total (\$) & Mean (\$/run) & Best Tier & Best CoP (\$) \\
     \midrule
-    test-001 & 360 & 13.72 & 0.04 & T1 & 0.037 \\
+    test-001 & 360 & 14.71 & 0.04 & T2 & 0.037 \\
     test-002 & 360 & 81.28 & 0.23 & T5 & 0.228 \\
     test-003 & 360 & 27.30 & 0.08 & T2 & 0.074 \\
     \midrule
-    Total & 1,080 & 122.31 & 0.11 & -- & 0.113 \\
+    Total & 1,080 & 123.30 & 0.11 & -- & 0.113 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 The cost distribution across experiments is highly skewed: test-002 accounts
-for 66.5\% (\$81.28) of the total cost despite comprising only one-third of
+for 65.9\% (\$81.28) of the total cost despite comprising only one-third of
 the runs. This reflects the larger repository size and greater complexity of
 the Mojo task, which requires more tokens for context loading and code
 generation.
 
-The best Cost-of-Pass varies across experiments: T1 for test-001 (\$0.037),
+The best Cost-of-Pass varies across experiments: T2 for test-001 (\$0.037),
 T5 for test-002 (\$0.228), and T2 for test-003 (\$0.074). This variation
 reinforces the task-dependent nature of architectural optimization identified
 in the interaction analysis. No single tier achieves the best CoP across all
@@ -2140,7 +2336,7 @@ orchestration does not substantially increase output token count, as the
 coordination messages are brief relative to the generated code.
 
 % -------------------------------------------------------------------
-% APPENDIX F: Reproducibility
+% APPENDIX G: Reproducibility
 % -------------------------------------------------------------------
 \section{Reproducibility}
 \label{app:reproducibility}

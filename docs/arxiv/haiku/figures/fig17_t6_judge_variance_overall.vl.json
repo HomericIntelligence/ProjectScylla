@@ -28,7 +28,7 @@
   "hconcat": [
     {
       "data": {
-        "name": "data-2b000f49432bada79839d389d58e55d1"
+        "name": "data-4921a6f88e8128277335c8acacf14e83"
       },
       "mark": {
         "type": "boxplot",
@@ -80,7 +80,7 @@
     },
     {
       "data": {
-        "name": "data-34630703cbf9f14b87097a0e27a31c24"
+        "name": "data-866d151940cabdf2e6c4c2557e0903bf"
       },
       "mark": {
         "type": "bar"
@@ -131,7 +131,7 @@
           "scale": {
             "domain": [
               0,
-              0.4
+              0.35000000000000003
             ]
           },
           "title": "Score Std Dev",
@@ -145,7 +145,61 @@
   "title": "Judge Variance - T6",
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-2b000f49432bada79839d389d58e55d1": [
+    "data-4921a6f88e8128277335c8acacf14e83": [
+      {
+        "tier": "T6",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.91,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T6",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.934,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T6",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T6",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T6",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.94,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T6",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T6",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.95,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T6",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.886,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T6",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.93,
+        "judge_display": "claude-haiku-4-5"
+      },
       {
         "tier": "T6",
         "judge_model": "claude-opus-4-6",
@@ -255,18 +309,18 @@
         "judge_display": "claude-haiku-4-5"
       }
     ],
-    "data-34630703cbf9f14b87097a0e27a31c24": [
+    "data-866d151940cabdf2e6c4c2557e0903bf": [
       {
         "judge_display": "claude-haiku-4-5",
-        "score_std": 0.3777697711569839
+        "score_std": 0.3384687742039303
       },
       {
         "judge_display": "claude-opus-4-6",
-        "score_std": 0.07598793763925082
+        "score_std": 0.0829533001151853
       },
       {
         "judge_display": "claude-sonnet-4-6",
-        "score_std": 0.09075608335900501
+        "score_std": 0.07446270505725966
       }
     ]
   }

@@ -157,7 +157,7 @@
           "scale": {
             "domain": [
               0,
-              0.45
+              0.30000000000000004
             ]
           },
           "title": "Score Std Dev",
@@ -170,12 +170,12 @@
     }
   ],
   "data": {
-    "name": "data-b1480f6affdaa7cdaa75f08240107631"
+    "name": "data-bb706baa341468c027b1ad3197166dba"
   },
   "title": "Success Variance Aggregate (All Subtests Combined Per Tier)",
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-b1480f6affdaa7cdaa75f08240107631": [
+    "data-bb706baa341468c027b1ad3197166dba": [
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T0",
@@ -200,29 +200,29 @@
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
-        "pass_variance": 0.1830186323543452,
-        "score_std": 0.3469488619744278,
+        "pass_variance": 0.02379535990481858,
+        "score_std": 0.14619083758210208,
         "n_runs": 369
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "pass_variance": 0.22959183673469385,
-        "score_std": 0.38511287713578524,
+        "pass_variance": 0.023242630385487552,
+        "score_std": 0.14941207073530216,
         "n_runs": 126
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
-        "pass_variance": 0.23319615912208505,
-        "score_std": 0.38172720532717974,
+        "pass_variance": 0.03566529492455423,
+        "score_std": 0.1491592486110924,
         "n_runs": 135
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
-        "pass_variance": 0.22222222222222224,
-        "score_std": 0.403392729786302,
+        "pass_variance": 0.0,
+        "score_std": 0.1320112579374283,
         "n_runs": 9
       }
     ]
