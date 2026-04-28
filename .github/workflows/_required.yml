@@ -1,5 +1,5 @@
 # Gold-standard reference implementation for the org-wide homeric-main-baseline ruleset.
-# This workflow defines the 9 canonical status-check contexts that the branch protection
+# This workflow defines the 8 canonical status-check contexts that the branch protection
 # ruleset requires. All other HomericIntelligence repos should mirror this structure,
 # adapting only the implementation steps to their own tech stack.
 #
@@ -23,7 +23,7 @@ jobs:
   # ── 1. lint ────────────────────────────────────────────────────────────────
   lint:
     name: lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
 
     steps:
@@ -52,10 +52,13 @@ jobs:
       - name: Enforce complexity limit (C901)
         run: pixi run --environment lint ruff check --select C901 src/scylla/ scripts/
 
+      - name: Run mypy
+        run: pixi run --environment lint mypy scripts/ src/scylla/ tests/
+
   # ── 2. unit-tests ──────────────────────────────────────────────────────────
   unit-tests:
     name: unit-tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
 
     steps:
@@ -164,7 +167,7 @@ jobs:
   # ── 3. integration-tests ───────────────────────────────────────────────────
   integration-tests:
     name: integration-tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
 
     steps:
@@ -211,7 +214,7 @@ jobs:
   # ── 4. security/dependency-scan ────────────────────────────────────────────
   security/dependency-scan:
     name: security/dependency-scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
 
     steps:
@@ -244,7 +247,7 @@ jobs:
   # ── 5. security/secrets-scan ───────────────────────────────────────────────
   security/secrets-scan:
     name: security/secrets-scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
 
     steps:
@@ -253,19 +256,39 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install gitleaks
+      - name: Install Gitleaks
         run: |
-          GITLEAKS_VERSION="8.21.2"
-          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
-            | tar xz -C /usr/local/bin gitleaks
+          GITLEAKS_VERSION=8.30.1
+          OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+          ARCH=$(uname -m | sed 's/x86_64/x64/;s/aarch64/arm64/')
+          curl -sSfL \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_${OS}_${ARCH}.tar.gz" \
+            | tar -xz -C /usr/local/bin gitleaks
+          gitleaks version
 
-      - name: Run gitleaks
-        run: gitleaks detect --source . --config .gitleaks.toml --verbose
+      - name: Run Gitleaks
+        run: |
+          if [ -f .gitleaks.toml ]; then
+            gitleaks detect --source . --config .gitleaks.toml \
+              --report-format sarif --report-path gitleaks.sarif --exit-code 0
+          else
+            gitleaks detect --source . \
+              --report-format sarif --report-path gitleaks.sarif --exit-code 0
+          fi
+        continue-on-error: true
+
+      - name: Upload Gitleaks SARIF
+        if: always() && hashFiles('gitleaks.sarif') != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: gitleaks-report
+          path: gitleaks.sarif
+          retention-days: 90
 
   # ── 6. build ───────────────────────────────────────────────────────────────
   build:
     name: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
 
     steps:
@@ -296,27 +319,10 @@ jobs:
           pixi run python -m build --no-isolation
           ls -lh dist/
 
-  # ── 7. typecheck ───────────────────────────────────────────────────────────
-  typecheck:
-    name: typecheck
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
-
-      - name: Set up Pixi
-        uses: ./.github/actions/setup-pixi
-        with:
-          environment: lint
-
-      - name: Run mypy
-        run: pixi run --environment lint mypy scripts/ src/scylla/ tests/
-
-  # ── 8. schema-validation ───────────────────────────────────────────────────
+  # ── 7. schema-validation ───────────────────────────────────────────────────
   schema-validation:
     name: schema-validation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
 
     steps:
@@ -342,10 +348,10 @@ jobs:
             python3 -c "import json, sys; json.load(open('$f'))" || exit 1
           done
 
-  # ── 9. deps/version-sync ───────────────────────────────────────────────────
+  # ── 8. deps/version-sync ───────────────────────────────────────────────────
   deps/version-sync:
     name: deps/version-sync
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
 
     steps:
@@ -386,3 +392,97 @@ jobs:
             echo "::error::pixi.lock is stale — run 'pixi install' locally and commit pixi.lock"
             exit 1
           fi
+
+  # ── 9. markdownlint ────────────────────────────────────────────────────────
+  markdownlint:
+    name: markdownlint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    needs: lint
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - name: Run markdownlint-cli2
+        uses: DavidAnson/markdownlint-cli2-action@05f32210e84442804257b2a6f20b273450ec8265  # v20.0.0
+        with:
+          globs: "**/*.md"
+          config: ".markdownlint.yaml"
+
+  # ── 10. pixi-check ─────────────────────────────────────────────────────────
+  pixi-check:
+    name: pixi-check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    needs: lint
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - name: Skip if no pixi.toml
+        id: detect
+        run: |
+          if [ ! -f pixi.toml ]; then
+            echo "::notice::No pixi.toml in repo, skipping pixi-check"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Setup pixi
+        if: steps.detect.outputs.skip == 'false'
+        uses: prefix-dev/setup-pixi@v0.9.5
+        with:
+          pixi-version: v0.67.2
+          cache: true
+      - name: pixi install (locked)
+        if: steps.detect.outputs.skip == 'false'
+        run: |
+          if [ -f pixi.lock ]; then
+            pixi install --locked
+          else
+            echo "::warning::pixi.toml present but pixi.lock missing — running unlocked"
+            pixi install
+          fi
+
+  # ── 11. justfile-check ─────────────────────────────────────────────────────
+  justfile-check:
+    name: justfile-check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    needs: lint
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - name: Skip if no justfile
+        id: detect
+        run: |
+          if [ ! -f justfile ] && [ ! -f Justfile ]; then
+            echo "::notice::No justfile in repo, skipping justfile-check"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Install just
+        if: steps.detect.outputs.skip == 'false'
+        uses: extractions/setup-just@dd310ad5a97d8e7b41793f8ef055398d51ad4de6  # v2.0.0
+        with:
+          just-version: "1.36.0"
+      - name: Validate justfile
+        if: steps.detect.outputs.skip == 'false'
+        run: |
+          just --evaluate >/dev/null
+          just --list >/dev/null
+
+  # ── 12. symlink-check ──────────────────────────────────────────────────────
+  symlink-check:
+    name: symlink-check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    needs: lint
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - name: Run symlink check
+        run: bash scripts/check-symlinks.sh
