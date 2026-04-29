@@ -852,7 +852,9 @@ differentiation across the architectural spectrum:
 
 For this task, tier effects are subtle and, notably, the direction of the
 effect is \emph{reversed} relative to test-001. Pass rates increase slightly
-from T0 (0.903) to T6 (1.000), with a modest upward trend. This reversal is
+from T0 (0.903) toward T6 (1.000), though the trend is not strictly
+monotonic---T5 (0.956) dips below T4 (0.976) before T6 reaches perfect
+pass rate. This reversal is
 a key driver of the significant tier $\times$ experiment interaction discussed
 in Section~\ref{sec:interaction}.
 
@@ -1278,13 +1280,18 @@ increases, disagreement grows: Opus and Haiku disagree by 0.210, while Sonnet
 and Haiku---the pair with the most divergent capability levels after accounting
 for the specific evaluation task---disagree by 0.270.
 
-This monotonic relationship between capability gap and disagreement is
-consistent with the hypothesis that the budget model lacks sufficient
-evaluative capacity to produce reliable judgments. Haiku may be applying
-different evaluation criteria, assigning scores based on surface features
-(e.g., output length, code structure) rather than the deeper quality
-assessments (e.g., correctness, completeness, adherence to specifications)
-performed by the frontier judges.
+The two frontier judges agree closely with each other
+(mean $|\Delta| = 0.089$) while both disagree substantially with Haiku
+(mean $|\Delta| = 0.210$ and $0.270$ for Opus--Haiku and Sonnet--Haiku
+respectively). Notably, Sonnet--Haiku disagreement exceeds Opus--Haiku
+disagreement despite Sonnet having a smaller capability gap, suggesting a
+threshold pattern rather than strictly monotonic scaling with capability
+distance. This pattern is consistent with the hypothesis that the budget
+model lacks sufficient evaluative capacity to produce reliable judgments.
+Haiku may be applying different evaluation criteria, assigning scores based
+on surface features (e.g., output length, code structure) rather than the
+deeper quality assessments (e.g., correctness, completeness, adherence to
+specifications) performed by the frontier judges.
 
 The near-zero Krippendorff's $\alpha$ raises a methodological concern that
 affects the interpretation of all results in this paper. If the judges do not
