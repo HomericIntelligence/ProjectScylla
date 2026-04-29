@@ -4,4 +4,4 @@ extends_previous: true
 resources:
   skills:
     categories:
-    - cicd
+      - cicd

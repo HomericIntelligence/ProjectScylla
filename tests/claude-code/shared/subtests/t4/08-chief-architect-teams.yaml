@@ -5,4 +5,4 @@ agent_teams: true
 resources:
   agents:
     levels:
-    - 0
+      - 0

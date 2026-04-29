@@ -5,10 +5,10 @@ extends_previous: false
 resources:
   claude_md:
     blocks:
-    - B01
-    - B02
-    - B03
-    - B04
-    - B05
-    - B06
-    - B07
+      - B01
+      - B02
+      - B03
+      - B04
+      - B05
+      - B06
+      - B07
