@@ -4,7 +4,7 @@ extends_previous: true
 resources:
   agents:
     levels:
-    - 2
-    - 3
-    - 4
-    - 5
+      - 2
+      - 3
+      - 4
+      - 5

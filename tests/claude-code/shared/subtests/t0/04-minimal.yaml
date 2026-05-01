@@ -4,5 +4,5 @@ extends_previous: false
 resources:
   claude_md:
     blocks:
-    - B01
-    - B02
+      - B01
+      - B02

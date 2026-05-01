@@ -4,12 +4,12 @@ extends_previous: true
 resources:
   skills:
     categories:
-    - agent
-    - cicd
-    - documentation
-    - github
-    - mojo
-    - other
-    - quality
-    - workflow
-    - worktree
+      - agent
+      - cicd
+      - documentation
+      - github
+      - mojo
+      - other
+      - quality
+      - workflow
+      - worktree
