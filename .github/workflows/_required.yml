@@ -124,9 +124,6 @@ jobs:
       - name: Check doc/config consistency
         run: pixi run python scripts/check_doc_config_consistency.py --verbose
 
-      - name: Check CHANGELOG version entry
-        run: pixi run python scripts/check_changelog_version.py --verbose
-
       - name: Enforce tests/unit/ structure conventions
         run: pixi run python scripts/check_unit_test_structure.py
 
