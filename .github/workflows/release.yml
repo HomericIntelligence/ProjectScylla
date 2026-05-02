@@ -17,6 +17,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   bump-version:
@@ -57,16 +58,29 @@ jobs:
           git tag "v${VERSION}"
           echo "VERSION=v${VERSION}" >> "$GITHUB_ENV"
 
-      - name: Push branch and tag
+      - name: Push release branch and tag
         run: |
-          git push origin HEAD:main
+          git push origin "HEAD:release/version-bump-${{ env.VERSION }}"
           git push origin "${{ env.VERSION }}"
+
+      - name: Open PR for version bump
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --title "chore(release): bump version to ${{ env.VERSION }}" \
+            --body "Automated version bump to ${{ env.VERSION }} (${{ github.event.inputs.part }} release).
+
+          Triggered by @${{ github.actor }} via workflow_dispatch." \
+            --base main \
+            --head "release/version-bump-${{ env.VERSION }}"
+          gh pr merge --auto --rebase
 
       - name: Version bump complete
         run: |
           echo "Successfully bumped version to: ${{ env.VERSION }}"
           echo "Tag created and pushed: ${{ env.VERSION }}"
-          echo "Changes committed to main branch"
+          echo "PR opened for version bump branch: release/version-bump-${{ env.VERSION }}"
 
   release:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
