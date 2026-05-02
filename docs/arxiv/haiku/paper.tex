@@ -468,8 +468,9 @@ evaluation protocol proceeds as follows:
     and/or configuration modifications. Execution is bounded by a timeout
     to prevent runaway sessions.
   \item \textbf{Evaluation.} A three-judge panel evaluates the output against
-    predefined criteria. Each judge independently assigns scores on a
-    continuous $[0, 1]$ scale.
+    predefined criteria. Each judge independently evaluates the output
+    against weighted criteria, producing a per-judge score on a $[0, 1]$
+    scale (see Section~\ref{sec:judge_panel} for details).
   \item \textbf{Consensus.} The consensus score is computed as the arithmetic
     mean of the three judge scores. Implementation rate uses the median across
     judges.
@@ -1004,10 +1005,10 @@ configuration:
 
 The near-universal success on this trivial task establishes an important
 baseline: for a task requiring only a single line of code
-(\texttt{print("Hello, World!")}), architectural complexity neither helps nor
-hinders performance. All delegation-based tiers (T3--T6) achieve perfect pass
-rates, demonstrating that the coordination overhead of multi-agent
-architectures does not impede the budget model on simple tasks.
+(\texttt{print("Hello, World!")}), no significant effect of architectural
+complexity on performance was detected. All delegation-based tiers (T3--T6)
+achieve perfect pass rates, suggesting that coordination overhead did not
+detectably impede the budget model on simple tasks.
 
 T1 and T2 achieve perfect pass rates (1.000) with identical scores (0.908),
 suggesting that skills and tooling provide no marginal benefit over basic
@@ -1258,12 +1259,12 @@ and their interaction on the ranked outcome variables:
     Score & Interaction  & 223.5 & 12 & $<0.001$ & *** \\
     \midrule
     Cost  & Experiment   & 903.1 & 2  & $<0.001$ & *** \\
-    Cost  & Tier         &   4.0 & 6  & 0.676    & n.s. \\
-    Cost  & Interaction  &   4.8 & 12 & 0.965    & n.s. \\
+    Cost  & Tier         &   4.00 & 6  & 0.676    & n.s. \\
+    Cost  & Interaction  &   4.79 & 12 & 0.965    & n.s. \\
     \midrule
     Impl Rate & Experiment   & 490.7 & 2  & $<0.001$ & *** \\
-    Impl Rate & Tier         &   5.5 & 6  & 0.486    & n.s. \\
-    Impl Rate & Interaction  &   3.7 & 12 & 0.989    & n.s. \\
+    Impl Rate & Tier         &   5.47 & 6  & 0.486    & n.s. \\
+    Impl Rate & Interaction  &   3.66 & 12 & 0.989    & n.s. \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -1290,9 +1291,9 @@ flat, with T1 (skills) showing a slight score edge on the configuration task.
 For cost, the experiment main effect is dominant ($H=903.1$, $p<0.001$),
 reflecting the differing cost profiles of the three tasks. test-002 (Mojo) is
 approximately $6\times$ as expensive per run as test-001 (Python Hello
-World). However, neither the tier main effect ($H=4.0$, $p=0.676$) nor the
-interaction ($H=4.8$, $p=0.965$) is significant for cost, indicating that
-architectural complexity does not systematically affect expenditure.
+World). However, neither the tier main effect ($H=4.00$, $p=0.676$) nor the
+interaction ($H=4.79$, $p=0.965$) is significant for cost, indicating that
+no significant effect of architectural complexity on expenditure was detected.
 
 The implementation rate shows a similar pattern to cost: strong experiment
 effects ($H=490.7$, $p<0.001$) but no significant tier effects or
@@ -1489,6 +1490,8 @@ performed by the frontier judges.
 
 \subsubsection{Consensus Scoring and Signal Loss}
 
+\subsubsection{Consensus Scoring and Signal Loss}
+
 The near-zero Krippendorff's $\alpha$ raises a methodological concern that
 affects the interpretation of all results in this paper. If the judges do not
 agree, then the consensus score (arithmetic mean) may not be a reliable
@@ -1544,7 +1547,8 @@ pass rate (1.000).
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{fig06_cop_by_tier.png}
-  \caption{Cost-of-Pass by tier. The modest CoP variation across tiers
+  \caption{Cost-of-Pass by tier. Each bar shows the CoP
+    ($\overline{C} / R_{\text{pass}}$) for one tier. The modest variation
     reflects minor differences in pass rates rather than meaningful cost
     differences. T2 achieves the minimum CoP at \$0.11, making it the most
     cost-efficient tier in the aggregate.}
@@ -1601,15 +1605,15 @@ varies (T5 dominates for test-002).
 \label{sec:frontier_analysis}
 
 Figure~\ref{fig:cost_quality_pareto} presents the cost--quality Pareto
-frontier across all tier $\times$ experiment combinations.
+frontier across tiers, aggregated over experiments.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{fig08_cost_quality_pareto.png}
-  \caption{Cost--quality Pareto frontier. Each point represents a
-    tier--experiment combination, plotted by mean cost per run (x-axis, log
-    scale) and mean consensus score (y-axis). Pareto-optimal points lie on
-    the upper-left frontier. The narrow spread of points reflects the
+  \caption{Cost--quality Pareto frontier. Each point represents a tier
+    (aggregated across experiments), plotted by mean cost per run (x-axis,
+    log scale) and mean consensus score (y-axis). Pareto-optimal points lie
+    on the upper-left frontier. The narrow spread of points reflects the
     overall high pass rate (0.966) and cost invariance across tiers.}
   \label{fig:cost_quality_pareto}
 \end{figure}
@@ -1851,18 +1855,20 @@ Across 1,080 runs spanning three experiments, seven tiers, and 120 subtests
 at a total cost of \$123.30, we find no significant tier effect on pass rate
 ($H(6)=8.53$, $p=0.2015$) and an overall pass rate of 0.966.
 
-The central finding is that \emph{tiers are equivalent} for the budget model
-and tasks studied. All seven architectural configurations---from bare prompts
-(T0) through full capability stacking (T6)---achieve comparable pass rates.
-The additional complexity of delegation, hierarchy, and hybrid architectures
-provides no detectable benefit over simpler configurations.
+The central finding is that \emph{no significant tier effect was detected},
+suggesting practical equivalence for the budget model and tasks studied,
+though the study lacks the statistical power for formal equivalence testing.
+All seven architectural configurations---from bare prompts (T0) through full
+capability stacking (T6)---achieve comparable pass rates. The additional
+complexity of delegation, hierarchy, and hybrid architectures provides no
+detectable benefit over simpler configurations.
 
 Task-dependent effects dominate tier effects: the significant SRH interaction
 on continuous scores ($H(12) = 223.5$, $p < 0.001$) indicates that the
 combination of tier and task determines quality, but these score-level
 differences do not translate to significant pass rate variation. Cost is
-similarly invariant across tiers ($H(6) = 4.00$, $p = 0.676$), reinforcing
-the conclusion that architectural complexity provides no advantage.
+similarly invariant across tiers ($H(6) = 4.00$, $p = 0.676$), consistent
+with the absence of a detectable architectural complexity advantage.
 
 The poor inter-rater reliability ($\alpha = 0.034$) of the three-judge
 panel is the primary methodological concern. It suggests that LLM-as-judge
