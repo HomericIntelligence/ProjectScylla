@@ -26,7 +26,7 @@
     }
   },
   "data": {
-    "name": "data-d52b3812fa7e86bd4ccde00ebc35c4e1"
+    "name": "data-40be708299840b2688016c62004b3e5a"
   },
   "facet": {
     "column": {
@@ -106,7 +106,7 @@
   "title": "Token Distribution by Tier",
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-d52b3812fa7e86bd4ccde00ebc35c4e1": [
+    "data-40be708299840b2688016c62004b3e5a": [
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T0",
@@ -135,7 +135,7 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "token_type": "input_tokens",
-        "tokens": 59.924119241192415,
+        "tokens": 58.80487804878049,
         "token_type_label": "Input (Fresh)",
         "token_type_order": 0
       },
@@ -143,7 +143,7 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "token_type": "input_tokens",
-        "tokens": 41.42857142857143,
+        "tokens": 40.43650793650794,
         "token_type_label": "Input (Fresh)",
         "token_type_order": 0
       },
@@ -151,7 +151,7 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "token_type": "input_tokens",
-        "tokens": 49.22962962962963,
+        "tokens": 48.46666666666667,
         "token_type_label": "Input (Fresh)",
         "token_type_order": 0
       },
@@ -159,7 +159,7 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "token_type": "input_tokens",
-        "tokens": 47.0,
+        "tokens": 45.666666666666664,
         "token_type_label": "Input (Fresh)",
         "token_type_order": 0
       },
@@ -191,7 +191,7 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "token_type": "output_tokens",
-        "tokens": 2636.869918699187,
+        "tokens": 2632.6124661246613,
         "token_type_label": "Output",
         "token_type_order": 2
       },
@@ -199,7 +199,7 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "token_type": "output_tokens",
-        "tokens": 2583.9126984126983,
+        "tokens": 2592.5476190476193,
         "token_type_label": "Output",
         "token_type_order": 2
       },
@@ -207,7 +207,7 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "token_type": "output_tokens",
-        "tokens": 2564.8814814814814,
+        "tokens": 2573.911111111111,
         "token_type_label": "Output",
         "token_type_order": 2
       },
@@ -215,7 +215,7 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "token_type": "output_tokens",
-        "tokens": 2665.3333333333335,
+        "tokens": 2675.3333333333335,
         "token_type_label": "Output",
         "token_type_order": 2
       },
@@ -247,7 +247,7 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "token_type": "cache_creation_tokens",
-        "tokens": 24241.140921409213,
+        "tokens": 24842.655826558264,
         "token_type_label": "Cache Creation",
         "token_type_order": 3
       },
@@ -255,7 +255,7 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "token_type": "cache_creation_tokens",
-        "tokens": 24471.634920634922,
+        "tokens": 25327.29365079365,
         "token_type_label": "Cache Creation",
         "token_type_order": 3
       },
@@ -263,7 +263,7 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "token_type": "cache_creation_tokens",
-        "tokens": 28148.607407407406,
+        "tokens": 28822.074074074073,
         "token_type_label": "Cache Creation",
         "token_type_order": 3
       },
@@ -271,7 +271,7 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "token_type": "cache_creation_tokens",
-        "tokens": 47389.333333333336,
+        "tokens": 56977.77777777778,
         "token_type_label": "Cache Creation",
         "token_type_order": 3
       },
@@ -303,7 +303,7 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "token_type": "cache_read_tokens",
-        "tokens": 632158.7642276423,
+        "tokens": 636376.9810298103,
         "token_type_label": "Input (Cached)",
         "token_type_order": 1
       },
@@ -311,7 +311,7 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "token_type": "cache_read_tokens",
-        "tokens": 649312.6904761905,
+        "tokens": 657388.3888888889,
         "token_type_label": "Input (Cached)",
         "token_type_order": 1
       },
@@ -319,7 +319,7 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "token_type": "cache_read_tokens",
-        "tokens": 657564.2444444444,
+        "tokens": 664571.4592592593,
         "token_type_label": "Input (Cached)",
         "token_type_order": 1
       },
@@ -327,7 +327,7 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "token_type": "cache_read_tokens",
-        "tokens": 772688.1111111111,
+        "tokens": 771638.7777777778,
         "token_type_label": "Input (Cached)",
         "token_type_order": 1
       }

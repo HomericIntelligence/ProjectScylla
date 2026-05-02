@@ -26,7 +26,7 @@
     }
   },
   "data": {
-    "name": "data-995a5b26f81c3faaa3d6274f2f892c88"
+    "name": "data-9818e6e78b18ed1447c77591a4f382d4"
   },
   "mark": {
     "type": "line"
@@ -104,7 +104,7 @@
   "title": "Convergence: Running Mean Pass Rate by Tier",
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-995a5b26f81c3faaa3d6274f2f892c88": [
+    "data-9818e6e78b18ed1447c77591a4f382d4": [
       {
         "tier": "T0",
         "n_experiments": 1,
@@ -153,62 +153,62 @@
       {
         "tier": "T3",
         "n_experiments": 1,
-        "running_mean": 0.34959349593495936
+        "running_mean": 1.0
       },
       {
         "tier": "T3",
         "n_experiments": 2,
-        "running_mean": 0.6585365853658537
+        "running_mean": 0.983739837398374
       },
       {
         "tier": "T3",
         "n_experiments": 3,
-        "running_mean": 0.7588075880758808
+        "running_mean": 0.975609756097561
       },
       {
         "tier": "T4",
         "n_experiments": 1,
-        "running_mean": 0.0
+        "running_mean": 1.0
       },
       {
         "tier": "T4",
         "n_experiments": 2,
-        "running_mean": 0.4880952380952381
+        "running_mean": 0.9880952380952381
       },
       {
         "tier": "T4",
         "n_experiments": 3,
-        "running_mean": 0.6428571428571428
+        "running_mean": 0.9761904761904763
       },
       {
         "tier": "T5",
         "n_experiments": 1,
-        "running_mean": 0.0
+        "running_mean": 1.0
       },
       {
         "tier": "T5",
         "n_experiments": 2,
-        "running_mean": 0.4777777777777778
+        "running_mean": 0.9777777777777779
       },
       {
         "tier": "T5",
         "n_experiments": 3,
-        "running_mean": 0.6296296296296297
+        "running_mean": 0.9629629629629631
       },
       {
         "tier": "T6",
         "n_experiments": 1,
-        "running_mean": 0.0
+        "running_mean": 1.0
       },
       {
         "tier": "T6",
         "n_experiments": 2,
-        "running_mean": 0.5
+        "running_mean": 1.0
       },
       {
         "tier": "T6",
         "n_experiments": 3,
-        "running_mean": 0.6666666666666666
+        "running_mean": 1.0
       }
     ]
   }

@@ -26,7 +26,7 @@
     }
   },
   "data": {
-    "name": "data-7551ba30627567b153d010533b1a844a"
+    "name": "data-8c478c888184676d58ee822c4196a9f0"
   },
   "mark": {
     "type": "bar"
@@ -92,7 +92,7 @@
   "title": "Tier Win Count Across Experiments",
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-7551ba30627567b153d010533b1a844a": [
+    "data-8c478c888184676d58ee822c4196a9f0": [
       {
         "tier": "T0",
         "wins": 0
@@ -107,19 +107,19 @@
       },
       {
         "tier": "T3",
-        "wins": 0
+        "wins": 1
       },
       {
         "tier": "T4",
-        "wins": 0
+        "wins": 1
       },
       {
         "tier": "T5",
-        "wins": 0
+        "wins": 1
       },
       {
         "tier": "T6",
-        "wins": 2
+        "wins": 3
       }
     ]
   }

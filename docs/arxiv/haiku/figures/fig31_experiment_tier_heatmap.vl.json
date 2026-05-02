@@ -26,7 +26,7 @@
     }
   },
   "data": {
-    "name": "data-0edfcdefc89f098161d36c6f924a8eac"
+    "name": "data-6853a8fe036fa214634a1c84a7f0eed4"
   },
   "mark": {
     "type": "rect"
@@ -91,7 +91,7 @@
   "title": "Pass Rate by Experiment and Tier",
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-0edfcdefc89f098161d36c6f924a8eac": [
+    "data-6853a8fe036fa214634a1c84a7f0eed4": [
       {
         "experiment": "test-001",
         "tier": "T0",
@@ -110,22 +110,22 @@
       {
         "experiment": "test-001",
         "tier": "T3",
-        "pass_rate": 0.34959349593495936
+        "pass_rate": 1.0
       },
       {
         "experiment": "test-001",
         "tier": "T4",
-        "pass_rate": 0.0
+        "pass_rate": 1.0
       },
       {
         "experiment": "test-001",
         "tier": "T5",
-        "pass_rate": 0.0
+        "pass_rate": 1.0
       },
       {
         "experiment": "test-001",
         "tier": "T6",
-        "pass_rate": 0.0
+        "pass_rate": 1.0
       },
       {
         "experiment": "test-002",

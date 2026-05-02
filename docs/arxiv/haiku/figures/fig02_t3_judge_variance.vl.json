@@ -26,7 +26,7 @@
     }
   },
   "data": {
-    "name": "data-aae8aefc01e24888e006b9c20ebc9e88"
+    "name": "data-0d5457592e75b1d27d5338cc75513a42"
   },
   "mark": {
     "type": "bar"
@@ -51,14 +51,18 @@
   "width": 400,
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-aae8aefc01e24888e006b9c20ebc9e88": [
+    "data-0d5457592e75b1d27d5338cc75513a42": [
       {
         "tier": "T3",
-        "judge_score": 0.89
+        "judge_score": 0.95
       },
       {
         "tier": "T3",
-        "judge_score": 0.91
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
       },
       {
         "tier": "T3",
@@ -66,35 +70,7 @@
       },
       {
         "tier": "T3",
-        "judge_score": 0.92
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.91
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.95
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.91
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.8964
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.92
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.92
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.9036
+        "judge_score": 0.93
       },
       {
         "tier": "T3",
@@ -102,71 +78,11 @@
       },
       {
         "tier": "T3",
-        "judge_score": 0.81
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.88
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.95
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.89
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.9
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.95
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.87
-      },
-      {
-        "tier": "T3",
         "judge_score": 0.93
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.95
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.95
       },
       {
         "tier": "T3",
         "judge_score": 0.91
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.94
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.87
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.89
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.93
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.89
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.8964
       },
       {
         "tier": "T3",
@@ -174,11 +90,11 @@
       },
       {
         "tier": "T3",
-        "judge_score": 0.89
+        "judge_score": 0.95
       },
       {
         "tier": "T3",
-        "judge_score": 0.9236
+        "judge_score": 0.936
       },
       {
         "tier": "T3",
@@ -186,7 +102,7 @@
       },
       {
         "tier": "T3",
-        "judge_score": 0.87
+        "judge_score": 0.95
       },
       {
         "tier": "T3",
@@ -194,27 +110,15 @@
       },
       {
         "tier": "T3",
-        "judge_score": 0.95
+        "judge_score": 0.96
       },
       {
         "tier": "T3",
-        "judge_score": 0.87
+        "judge_score": 0.89
       },
       {
         "tier": "T3",
-        "judge_score": 0.8929
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.95
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.95
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.9036
+        "judge_score": 0.93
       },
       {
         "tier": "T3",
@@ -222,23 +126,11 @@
       },
       {
         "tier": "T3",
-        "judge_score": 0.91
+        "judge_score": 0.93
       },
       {
         "tier": "T3",
-        "judge_score": 0.95
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.82
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.9036
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.95
+        "judge_score": 0.936
       },
       {
         "tier": "T3",
@@ -246,103 +138,19 @@
       },
       {
         "tier": "T3",
-        "judge_score": 0.9036
+        "judge_score": 0.92
       },
       {
         "tier": "T3",
-        "judge_score": 0.95
+        "judge_score": 0.929
       },
       {
         "tier": "T3",
-        "judge_score": 0.82
+        "judge_score": 0.92
       },
       {
         "tier": "T3",
-        "judge_score": 0.8971
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.95
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.89
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.897
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.95
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.891
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.95
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.88
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.91
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.95
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.87
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.91
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.95
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.89
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.9
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.88
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.82
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.9206
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.95
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.87
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.9286
-      },
-      {
-        "tier": "T3",
-        "judge_score": 1.0
+        "judge_score": 0.92
       },
       {
         "tier": "T3",
@@ -362,15 +170,23 @@
       },
       {
         "tier": "T3",
+        "judge_score": 0.91
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.9
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.91
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
         "judge_score": 0.95
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.89
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.9236
       },
       {
         "tier": "T3",
@@ -378,11 +194,195 @@
       },
       {
         "tier": "T3",
-        "judge_score": 0.88
+        "judge_score": 0.93
       },
       {
         "tier": "T3",
-        "judge_score": 0.9143
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.934
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.946
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.94
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.9545
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.89
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.985
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.96
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.89
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.94
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
       },
       {
         "tier": "T3",
@@ -394,7 +394,119 @@
       },
       {
         "tier": "T3",
-        "judge_score": 0.9136
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.9
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.89
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.9286
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.9514
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.9382
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
       },
       {
         "tier": "T3",
@@ -403,6 +515,62 @@
       {
         "tier": "T3",
         "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.85
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.89
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.94
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.96
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.9357
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.94
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
       },
       {
         "tier": "T3",
@@ -414,43 +582,7 @@
       },
       {
         "tier": "T3",
-        "judge_score": 0.87
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.9214
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.95
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.78
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.884
-      },
-      {
-        "tier": "T3",
         "judge_score": 0.92
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.95
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.8786
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.85
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.78
       },
       {
         "tier": "T3",
@@ -458,11 +590,7 @@
       },
       {
         "tier": "T3",
-        "judge_score": 0.95
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.88
+        "judge_score": 0.93
       },
       {
         "tier": "T3",
@@ -470,7 +598,7 @@
       },
       {
         "tier": "T3",
-        "judge_score": 0.83
+        "judge_score": 0.9314
       },
       {
         "tier": "T3",
@@ -478,15 +606,11 @@
       },
       {
         "tier": "T3",
-        "judge_score": 0.85
+        "judge_score": 0.92
       },
       {
         "tier": "T3",
-        "judge_score": 0.89
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.89
+        "judge_score": 0.93
       },
       {
         "tier": "T3",
@@ -502,15 +626,51 @@
       },
       {
         "tier": "T3",
+        "judge_score": 0.96
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.88
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.89
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
         "judge_score": 0.94
       },
       {
         "tier": "T3",
-        "judge_score": 0.81
+        "judge_score": 0.93
       },
       {
         "tier": "T3",
-        "judge_score": 0.9286
+        "judge_score": 0.94
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
       },
       {
         "tier": "T3",
@@ -518,31 +678,11 @@
       },
       {
         "tier": "T3",
-        "judge_score": 0.89
+        "judge_score": 0.92
       },
       {
         "tier": "T3",
-        "judge_score": 0.9036
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.95
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.89
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.9071
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.95
-      },
-      {
-        "tier": "T3",
-        "judge_score": 0.72
+        "judge_score": 0.9236
       },
       {
         "tier": "T3",
@@ -551,6 +691,842 @@
       {
         "tier": "T3",
         "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.96
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.91
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.96
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.9
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.89
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.936
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.91
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.91
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.91
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.91
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.89
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.89
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.943
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.94
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.97
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.9286
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.91
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.89
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.936
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.9
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.96
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.89
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.91
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.94
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.89
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.951
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.91
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.91
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.953
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.91
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.94
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.89
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.91
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.89
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.96
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.9545
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.91
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.96
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.87
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.91
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.9206
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.85
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.941
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.9
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.9286
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.936
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.85
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.9
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.94
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.89
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.946
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.96
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.936
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.89
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.94
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.87
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.9
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.9386
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.9286
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.88
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.89
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.936
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.96
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.89
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.91
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.88
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.89
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
+      },
+      {
+        "tier": "T3",
+        "judge_score": 0.93
       },
       {
         "tier": "T3",

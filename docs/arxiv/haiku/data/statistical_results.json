@@ -196,17 +196,17 @@
       "tier": "T3",
       "metric": "score",
       "n": 369,
-      "w_statistic": 0.7984579797388086,
-      "p_value": 4.412549181288793e-21,
+      "w_statistic": 0.8703828266193547,
+      "p_value": 5.080324802107252e-17,
       "is_normal": false
     },
     {
       "model": "claude-haiku-4-5",
       "tier": "T3",
       "metric": "impl_rate",
-      "n": 289,
-      "w_statistic": 0.7466125295573413,
-      "p_value": 9.445715760681115e-21,
+      "n": 369,
+      "w_statistic": 0.7049094340088069,
+      "p_value": 5.729172317076038e-25,
       "is_normal": false
     },
     {
@@ -214,8 +214,8 @@
       "tier": "T3",
       "metric": "cost_usd",
       "n": 369,
-      "w_statistic": 0.8184090065034516,
-      "p_value": 4.427314369085516e-20,
+      "w_statistic": 0.8153497383904083,
+      "p_value": 3.071869774974999e-20,
       "is_normal": false
     },
     {
@@ -223,8 +223,8 @@
       "tier": "T3",
       "metric": "duration_seconds",
       "n": 369,
-      "w_statistic": 0.7168943784922865,
-      "p_value": 1.57674906730274e-24,
+      "w_statistic": 0.6363470082053007,
+      "p_value": 3.016028159995736e-27,
       "is_normal": false
     },
     {
@@ -259,17 +259,17 @@
       "tier": "T4",
       "metric": "score",
       "n": 126,
-      "w_statistic": 0.8132407623816669,
-      "p_value": 2.324871967416352e-11,
+      "w_statistic": 0.8600432789965871,
+      "p_value": 1.4807215583380777e-09,
       "is_normal": false
     },
     {
       "model": "claude-haiku-4-5",
       "tier": "T4",
       "metric": "impl_rate",
-      "n": 83,
-      "w_statistic": 0.8659901194340094,
-      "p_value": 3.9347408477652686e-07,
+      "n": 125,
+      "w_statistic": 0.7915844943919699,
+      "p_value": 4.875994308224558e-12,
       "is_normal": false
     },
     {
@@ -277,8 +277,8 @@
       "tier": "T4",
       "metric": "cost_usd",
       "n": 126,
-      "w_statistic": 0.8251497914697016,
-      "p_value": 6.225413287376145e-11,
+      "w_statistic": 0.8248155045372366,
+      "p_value": 6.052004023759801e-11,
       "is_normal": false
     },
     {
@@ -286,8 +286,8 @@
       "tier": "T4",
       "metric": "duration_seconds",
       "n": 126,
-      "w_statistic": 0.7275934270736673,
-      "p_value": 5.444267752477399e-14,
+      "w_statistic": 0.6732797079474513,
+      "p_value": 2.288151853620352e-15,
       "is_normal": false
     },
     {
@@ -322,17 +322,17 @@
       "tier": "T5",
       "metric": "score",
       "n": 135,
-      "w_statistic": 0.8073841980153821,
-      "p_value": 4.958413872619887e-12,
+      "w_statistic": 0.8722491674732463,
+      "p_value": 2.0271402495031355e-09,
       "is_normal": false
     },
     {
       "model": "claude-haiku-4-5",
       "tier": "T5",
       "metric": "impl_rate",
-      "n": 90,
-      "w_statistic": 0.6615166038036437,
-      "p_value": 4.279864513657507e-13,
+      "n": 135,
+      "w_statistic": 0.6407733966377223,
+      "p_value": 1.0800260679679773e-16,
       "is_normal": false
     },
     {
@@ -340,8 +340,8 @@
       "tier": "T5",
       "metric": "cost_usd",
       "n": 135,
-      "w_statistic": 0.8938130867466411,
-      "p_value": 2.3126306502959078e-08,
+      "w_statistic": 0.8933882116317696,
+      "p_value": 2.1980988246954957e-08,
       "is_normal": false
     },
     {
@@ -349,8 +349,8 @@
       "tier": "T5",
       "metric": "duration_seconds",
       "n": 135,
-      "w_statistic": 0.7588021135361025,
-      "p_value": 1.2889085156633049e-13,
+      "w_statistic": 0.7167153938997883,
+      "p_value": 8.117782739673059e-15,
       "is_normal": false
     },
     {
@@ -385,36 +385,36 @@
       "tier": "T6",
       "metric": "score",
       "n": 9,
-      "w_statistic": 0.8072331975834718,
-      "p_value": 0.024690495043033795,
+      "w_statistic": 0.8260362654467966,
+      "p_value": 0.040303248663276996,
       "is_normal": false
     },
     {
       "model": "claude-haiku-4-5",
       "tier": "T6",
       "metric": "impl_rate",
-      "n": 6,
-      "w_statistic": 0.8114880946495657,
-      "p_value": 0.07437585257986885,
-      "is_normal": true
+      "n": 9,
+      "w_statistic": 0.8281502086685144,
+      "p_value": 0.04257002333212806,
+      "is_normal": false
     },
     {
       "model": "claude-haiku-4-5",
       "tier": "T6",
       "metric": "cost_usd",
       "n": 9,
-      "w_statistic": 0.7815760024419067,
-      "p_value": 0.012557614030304753,
-      "is_normal": false
+      "w_statistic": 0.8469265945409672,
+      "p_value": 0.0689252796479799,
+      "is_normal": true
     },
     {
       "model": "claude-haiku-4-5",
       "tier": "T6",
       "metric": "duration_seconds",
       "n": 9,
-      "w_statistic": 0.8669074327407896,
-      "p_value": 0.11389852182538701,
-      "is_normal": true
+      "w_statistic": 0.8206746283229027,
+      "p_value": 0.035067907657748795,
+      "is_normal": false
     },
     {
       "model": "claude-haiku-4-5",
@@ -449,25 +449,25 @@
       "model": "claude-haiku-4-5",
       "metric": "pass_rate",
       "n_groups": 7,
-      "h_statistic": 119.0085303777912,
-      "p_value": 2.6320042338115195e-23,
-      "is_significant": true
+      "h_statistic": 8.533805656157858,
+      "p_value": 0.2015433279830111,
+      "is_significant": false
     },
     {
       "model": "claude-haiku-4-5",
       "metric": "impl_rate",
       "n_groups": 7,
-      "h_statistic": 5.466311427991194,
-      "p_value": 0.4855377428491131,
+      "h_statistic": 5.831599204325011,
+      "p_value": 0.4423165864824725,
       "is_significant": false
     },
     {
       "model": "claude-haiku-4-5",
       "metric": "duration_seconds",
       "n_groups": 7,
-      "h_statistic": 40.93950944568678,
-      "p_value": 2.976211562486579e-07,
-      "is_significant": true
+      "h_statistic": 6.742985202477939,
+      "p_value": 0.3452711648709942,
+      "is_significant": false
     },
     {
       "model": "claude-haiku-4-5",
@@ -525,11 +525,11 @@
       "tier2": "T3",
       "n1": 135,
       "n2": 369,
-      "u_statistic": 30361.5,
+      "u_statistic": 24961.5,
       "metric": "pass_rate",
-      "p_value_raw": 1.8077497314456598e-08,
-      "p_value": 1.2654248120119618e-07,
-      "is_significant": true
+      "p_value_raw": 0.8887143574129042,
+      "p_value": 1.0,
+      "is_significant": false
     },
     {
       "model": "claude-haiku-4-5",
@@ -537,10 +537,10 @@
       "tier2": "T4",
       "n1": 369,
       "n2": 126,
-      "u_statistic": 25942.5,
+      "u_statistic": 23233.5,
       "metric": "pass_rate",
-      "p_value_raw": 0.011534190719362108,
-      "p_value": 0.05767095359681054,
+      "p_value_raw": 0.9719182253721156,
+      "p_value": 1.0,
       "is_significant": false
     },
     {
@@ -551,7 +551,7 @@
       "n2": 135,
       "u_statistic": 8617.5,
       "metric": "pass_rate",
-      "p_value_raw": 0.8254588017255876,
+      "p_value_raw": 0.5381785104424389,
       "p_value": 1.0,
       "is_significant": false
     },
@@ -563,7 +563,7 @@
       "n2": 9,
       "u_statistic": 585.0,
       "metric": "pass_rate",
-      "p_value_raw": 0.8279300244457386,
+      "p_value_raw": 0.5669255511246724,
       "p_value": 1.0,
       "is_significant": false
     },
@@ -573,12 +573,12 @@
       "tier2": "T6",
       "n1": 216,
       "n2": 9,
-      "u_statistic": 1233.0,
+      "u_statistic": 909.0,
       "overall_contrast": true,
       "metric": "pass_rate",
-      "p_value_raw": 0.0029383678791845913,
-      "p_value": 0.01763020727510755,
-      "is_significant": true
+      "p_value_raw": 0.43498269682446633,
+      "p_value": 1.0,
+      "is_significant": false
     },
     {
       "model": "claude-haiku-4-5",
@@ -609,22 +609,22 @@
       "tier1": "T2",
       "tier2": "T3",
       "n1": 135,
-      "n2": 289,
-      "u_statistic": 20366.0,
+      "n2": 369,
+      "u_statistic": 22886.5,
       "metric": "impl_rate",
-      "p_value_raw": 0.46265171441688846,
-      "p_value": 1.0,
+      "p_value_raw": 0.16113942700322237,
+      "p_value": 0.9668365620193342,
       "is_significant": false
     },
     {
       "model": "claude-haiku-4-5",
       "tier1": "T3",
       "tier2": "T4",
-      "n1": 289,
-      "n2": 83,
-      "u_statistic": 12792.0,
+      "n1": 369,
+      "n2": 125,
+      "u_statistic": 22344.0,
       "metric": "impl_rate",
-      "p_value_raw": 0.35061478432298265,
+      "p_value_raw": 0.6009121671256568,
       "p_value": 1.0,
       "is_significant": false
     },
@@ -632,11 +632,11 @@
       "model": "claude-haiku-4-5",
       "tier1": "T4",
       "tier2": "T5",
-      "n1": 83,
-      "n2": 90,
-      "u_statistic": 3806.0,
+      "n1": 125,
+      "n2": 135,
+      "u_statistic": 8923.5,
       "metric": "impl_rate",
-      "p_value_raw": 0.8277424151496893,
+      "p_value_raw": 0.4206180079875754,
       "p_value": 1.0,
       "is_significant": false
     },
@@ -644,11 +644,11 @@
       "model": "claude-haiku-4-5",
       "tier1": "T5",
       "tier2": "T6",
-      "n1": 90,
-      "n2": 6,
-      "u_statistic": 238.5,
+      "n1": 135,
+      "n2": 9,
+      "u_statistic": 625.5,
       "metric": "impl_rate",
-      "p_value_raw": 0.6352449939425742,
+      "p_value_raw": 0.8847563835244711,
       "p_value": 1.0,
       "is_significant": false
     },
@@ -682,11 +682,11 @@
       "tier2": "T3",
       "n1": 135,
       "n2": 369,
-      "u_statistic": 28753.0,
+      "u_statistic": 26455.0,
       "metric": "duration_seconds",
-      "p_value_raw": 0.00791695373230815,
-      "p_value": 0.04750172239384891,
-      "is_significant": true
+      "p_value_raw": 0.2853164894697192,
+      "p_value": 1.0,
+      "is_significant": false
     },
     {
       "model": "claude-haiku-4-5",
@@ -694,10 +694,10 @@
       "tier2": "T4",
       "n1": 369,
       "n2": 126,
-      "u_statistic": 25795.0,
+      "u_statistic": 22779.0,
       "metric": "duration_seconds",
-      "p_value_raw": 0.0661122971815749,
-      "p_value": 0.3305614859078745,
+      "p_value_raw": 0.735939577658595,
+      "p_value": 1.0,
       "is_significant": false
     },
     {
@@ -706,9 +706,9 @@
       "tier2": "T5",
       "n1": 126,
       "n2": 135,
-      "u_statistic": 8448.0,
+      "u_statistic": 7956.0,
       "metric": "duration_seconds",
-      "p_value_raw": 0.9261323094325177,
+      "p_value_raw": 0.36809605112307864,
       "p_value": 1.0,
       "is_significant": false
     },
@@ -718,9 +718,9 @@
       "tier2": "T6",
       "n1": 135,
       "n2": 9,
-      "u_statistic": 591.0,
+      "u_statistic": 557.0,
       "metric": "duration_seconds",
-      "p_value_raw": 0.8949447292579331,
+      "p_value_raw": 0.6798584410900206,
       "p_value": 1.0,
       "is_significant": false
     },
@@ -1067,19 +1067,19 @@
       "metric": "pass_rate",
       "tier1": "T2",
       "tier2": "T3",
-      "cliffs_delta": -0.21897018970189702,
-      "ci_low": -0.2682926829268293,
-      "ci_high": -0.16820234869015355,
-      "is_significant": true
+      "cliffs_delta": -0.002168021680216802,
+      "ci_low": -0.02710027100271003,
+      "ci_high": 0.035591689250225836,
+      "is_significant": false
     },
     {
       "model": "claude-haiku-4-5",
       "metric": "impl_rate",
       "tier1": "T2",
       "tier2": "T3",
-      "cliffs_delta": -0.04400871459694989,
-      "ci_low": -0.1600410098679995,
-      "ci_high": 0.07668338269912729,
+      "cliffs_delta": 0.0811402188095955,
+      "ci_low": -0.03486792851884952,
+      "ci_high": 0.19444113657422127,
       "is_significant": false
     },
     {
@@ -1087,10 +1087,10 @@
       "metric": "duration_seconds",
       "tier1": "T2",
       "tier2": "T3",
-      "cliffs_delta": -0.15439124761617987,
-      "ci_low": -0.2638689133659876,
-      "ci_high": -0.04485441649198449,
-      "is_significant": true
+      "cliffs_delta": -0.06212988055806484,
+      "ci_low": -0.1828565693064338,
+      "ci_high": 0.06258050808487639,
+      "is_significant": false
     },
     {
       "model": "claude-haiku-4-5",
@@ -1127,19 +1127,19 @@
       "metric": "pass_rate",
       "tier1": "T3",
       "tier2": "T4",
-      "cliffs_delta": -0.1159504452187379,
-      "ci_low": -0.21232837027993734,
-      "ci_high": -0.02338610668671478,
-      "is_significant": true
+      "cliffs_delta": 0.0005807200929152149,
+      "ci_low": -0.03948896631823461,
+      "ci_high": 0.024583817266744093,
+      "is_significant": false
     },
     {
       "model": "claude-haiku-4-5",
       "metric": "impl_rate",
       "tier1": "T3",
       "tier2": "T4",
-      "cliffs_delta": -0.06657772960353525,
-      "ci_low": -0.22157229191569422,
-      "ci_high": 0.09272938080187591,
+      "cliffs_delta": 0.031154471544715446,
+      "ci_low": -0.09374525745257453,
+      "ci_high": 0.15084595179254817,
       "is_significant": false
     },
     {
@@ -1147,9 +1147,9 @@
       "metric": "duration_seconds",
       "tier1": "T3",
       "tier2": "T4",
-      "cliffs_delta": -0.10960554049984944,
-      "ci_low": -0.23573315836155587,
-      "ci_high": 0.01635754201859714,
+      "cliffs_delta": 0.02013162988772745,
+      "ci_low": -0.10644911585954278,
+      "ci_high": 0.14252395882360253,
       "is_significant": false
     },
     {
@@ -1188,8 +1188,8 @@
       "tier1": "T4",
       "tier2": "T5",
       "cliffs_delta": -0.013227513227513227,
-      "ci_low": -0.12804232804232804,
-      "ci_high": 0.10793650793650794,
+      "ci_low": -0.05767195767195767,
+      "ci_high": 0.025925925925925925,
       "is_significant": false
     },
     {
@@ -1197,9 +1197,9 @@
       "metric": "impl_rate",
       "tier1": "T4",
       "tier2": "T5",
-      "cliffs_delta": -0.019009370816599733,
-      "ci_low": -0.18908415539358023,
-      "ci_high": 0.15127175368139223,
+      "cliffs_delta": -0.0576,
+      "ci_low": -0.19637976808639268,
+      "ci_high": 0.08204456032546727,
       "is_significant": false
     },
     {
@@ -1207,9 +1207,9 @@
       "metric": "duration_seconds",
       "tier1": "T4",
       "tier2": "T5",
-      "cliffs_delta": 0.006701940035273368,
-      "ci_low": -0.13062904174015286,
-      "ci_high": 0.14873603762492651,
+      "cliffs_delta": 0.06455026455026455,
+      "ci_low": -0.07656837205113083,
+      "ci_high": 0.20291819402333847,
       "is_significant": false
     },
     {
@@ -1248,18 +1248,18 @@
       "tier1": "T5",
       "tier2": "T6",
       "cliffs_delta": 0.037037037037037035,
-      "ci_low": -0.3333333333333333,
-      "ci_high": 0.3111111111111111,
-      "is_significant": false
+      "ci_low": 0.014814814814814815,
+      "ci_high": 0.08148148148148149,
+      "is_significant": true
     },
     {
       "model": "claude-haiku-4-5",
       "metric": "impl_rate",
       "tier1": "T5",
       "tier2": "T6",
-      "cliffs_delta": 0.11666666666666667,
-      "ci_low": -0.24074074074074073,
-      "ci_high": 0.4522929709909039,
+      "cliffs_delta": -0.02962962962962963,
+      "ci_low": -0.30904126302455964,
+      "ci_high": 0.29640324315814165,
       "is_significant": false
     },
     {
@@ -1267,9 +1267,9 @@
       "metric": "duration_seconds",
       "tier1": "T5",
       "tier2": "T6",
-      "cliffs_delta": 0.027160493827160494,
-      "ci_low": -0.2938271604938272,
-      "ci_high": 0.29471381037372546,
+      "cliffs_delta": 0.0831275720164609,
+      "ci_low": -0.12263374485596708,
+      "ci_high": 0.2839506172839506,
       "is_significant": false
     },
     {
@@ -1333,8 +1333,8 @@
       "tier2": "T3",
       "n1": 135,
       "n2": 369,
-      "observed_delta": -0.21897018970189702,
-      "power_at_observed": 0.965,
+      "observed_delta": -0.002168021680216802,
+      "power_at_observed": 0.0495,
       "power_at_medium_0_3": 0.9995
     },
     {
@@ -1344,8 +1344,8 @@
       "tier2": "T4",
       "n1": 369,
       "n2": 126,
-      "observed_delta": -0.1159504452187379,
-      "power_at_observed": 0.4951,
+      "observed_delta": 0.0005807200929152149,
+      "power_at_observed": 0.0527,
       "power_at_medium_0_3": 0.9994
     },
     {
@@ -1388,17 +1388,17 @@
       "metric1": "score",
       "metric2": "cost_usd",
       "n": 1080,
-      "spearman_rho": 0.01231254145087112,
-      "p_value": 0.6860817210249399,
-      "is_significant": false
+      "spearman_rho": -0.49338666386334223,
+      "p_value": 2.4583944197362696e-67,
+      "is_significant": true
     },
     {
       "model": "claude-haiku-4-5",
       "metric1": "score",
       "metric2": "total_tokens",
       "n": 1080,
-      "spearman_rho": 0.07734010873780432,
-      "p_value": 0.011005598841967602,
+      "spearman_rho": -0.37826783510659623,
+      "p_value": 4.553806198555009e-38,
       "is_significant": true
     },
     {
@@ -1406,35 +1406,35 @@
       "metric1": "score",
       "metric2": "duration_seconds",
       "n": 1080,
-      "spearman_rho": 0.23174321943945653,
-      "p_value": 1.2360407457658473e-14,
+      "spearman_rho": -0.344147536600229,
+      "p_value": 2.174001998815084e-31,
       "is_significant": true
     },
     {
       "model": "claude-haiku-4-5",
       "metric1": "score",
       "metric2": "impl_rate",
-      "n": 909,
-      "spearman_rho": 0.796945486178071,
-      "p_value": 9.020447778312472e-201,
+      "n": 1079,
+      "spearman_rho": 0.8172196380159986,
+      "p_value": 5.165860286374159e-260,
       "is_significant": true
     },
     {
       "model": "claude-haiku-4-5",
       "metric1": "impl_rate",
       "metric2": "cost_usd",
-      "n": 909,
-      "spearman_rho": -0.5700443971970429,
-      "p_value": 1.861192329876544e-79,
+      "n": 1079,
+      "spearman_rho": -0.540393130430478,
+      "p_value": 7.705302132576906e-83,
       "is_significant": true
     },
     {
       "model": "claude-haiku-4-5",
       "metric1": "impl_rate",
       "metric2": "duration_seconds",
-      "n": 909,
-      "spearman_rho": -0.43523894488346065,
-      "p_value": 2.618529544396632e-43,
+      "n": 1079,
+      "spearman_rho": -0.4541839210953398,
+      "p_value": 4.976503275921499e-56,
       "is_significant": true
     },
     {
@@ -1442,7 +1442,7 @@
       "metric1": "cost_usd",
       "metric2": "total_tokens",
       "n": 1080,
-      "spearman_rho": 0.8693810910851141,
+      "spearman_rho": 0.8658610664210289,
       "p_value": 0.0,
       "is_significant": true
     }
@@ -1479,37 +1479,37 @@
       "model": "claude-haiku-4-5",
       "tier": "T3",
       "n": 369,
-      "pass_rate": 0.7588075880758808,
-      "mean_cost": 0.11278743699186994,
-      "median_cost": 0.07009565000000001,
-      "cop": 0.14863772946428574
+      "pass_rate": 0.975609756097561,
+      "mean_cost": 0.113938745799458,
+      "median_cost": 0.07028115,
+      "cop": 0.11678721444444444
     },
     {
       "model": "claude-haiku-4-5",
       "tier": "T4",
       "n": 126,
-      "pass_rate": 0.6428571428571429,
-      "mean_cost": 0.11670693888888888,
-      "median_cost": 0.07531575,
-      "cop": 0.18154412716049378
+      "pass_rate": 0.9761904761904762,
+      "mean_cost": 0.11862626468253969,
+      "median_cost": 0.0774225,
+      "cop": 0.12151958821138212
     },
     {
       "model": "claude-haiku-4-5",
       "tier": "T5",
       "n": 135,
-      "pass_rate": 0.6296296296296297,
-      "mean_cost": 0.11785477296296297,
-      "median_cost": 0.09456639999999998,
-      "cop": 0.18718111
+      "pass_rate": 0.9629629629629629,
+      "mean_cost": 0.11944171296296296,
+      "median_cost": 0.09495870000000001,
+      "cop": 0.12403562500000001
     },
     {
       "model": "claude-haiku-4-5",
       "tier": "T6",
       "n": 9,
-      "pass_rate": 0.6666666666666666,
-      "mean_cost": 0.14987914444444445,
-      "median_cost": 0.11260935,
-      "cop": 0.22481871666666667
+      "pass_rate": 1.0,
+      "mean_cost": 0.16180843333333333,
+      "median_cost": 0.12003205000000003,
+      "cop": 0.16180843333333333
     },
     {
       "model": "claude-haiku-4-5",
@@ -1534,10 +1534,10 @@
     {
       "metric": "score",
       "effect": "tier",
-      "h_statistic": 91.34145437867998,
+      "h_statistic": 10.568142614162408,
       "df": 6,
-      "p_value": 0.0,
-      "is_significant": true
+      "p_value": 0.10267624255723728,
+      "is_significant": false
     },
     {
       "metric": "score",
@@ -1558,9 +1558,9 @@
     {
       "metric": "impl_rate",
       "effect": "tier",
-      "h_statistic": 5.466311427991362,
+      "h_statistic": 5.831599204324929,
       "df": 6,
-      "p_value": 0.4855377428490927,
+      "p_value": 0.44231658648248195,
       "is_significant": false
     },
     {
@@ -1582,9 +1582,9 @@
     {
       "metric": "cost_usd",
       "effect": "tier",
-      "h_statistic": 4.001630848862611,
+      "h_statistic": 8.45925678078137,
       "df": 6,
-      "p_value": 0.676455704802553,
+      "p_value": 0.20634962241472188,
       "is_significant": false
     },
     {
@@ -1606,10 +1606,10 @@
     {
       "metric": "duration_seconds",
       "effect": "tier",
-      "h_statistic": 40.93950944568644,
+      "h_statistic": 6.7429852024779295,
       "df": 6,
-      "p_value": 2.976211562755182e-07,
-      "is_significant": true
+      "p_value": 0.3452711648709952,
+      "is_significant": false
     },
     {
       "metric": "duration_seconds",

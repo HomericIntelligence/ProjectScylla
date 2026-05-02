@@ -26,7 +26,7 @@
     }
   },
   "data": {
-    "name": "data-e5bea49975c25cd44d0112f7160376cb"
+    "name": "data-d81906a635ea69690afce6f40d507049"
   },
   "mark": {
     "type": "bar"
@@ -70,10 +70,10 @@
   "title": "Task Difficulty Distribution (Pass Rate per Experiment)",
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-e5bea49975c25cd44d0112f7160376cb": [
+    "data-d81906a635ea69690afce6f40d507049": [
       {
         "experiment": "test-001",
-        "pass_rate": 0.5194444444444445
+        "pass_rate": 0.9916666666666667
       },
       {
         "experiment": "test-002",

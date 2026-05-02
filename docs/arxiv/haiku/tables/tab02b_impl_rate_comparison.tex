@@ -2,22 +2,21 @@
 \centering
 \caption{Table 2b: Impl-Rate Tier Pairwise Comparison}
 \label{tab:impl_rate_tier_comparison}
-\begin{tabular}{llrrrrrl}
+\begin{tabular}{lrrrrrl}
 \toprule
-Model & Transition & N (T1, T2) & Impl-Rate $\Delta$ & p-value & Cliff's $\delta$ & Power & Significant? \\
+Transition & N (T1, T2) & Impl-Rate $\Delta$ & p-value & Cliff's $\delta$ & Power & Significant? \\
 \midrule
-claude-haiku-4-5 & T0→T1 & (216, 90) & +0.0373 & --- & +0.057 & 0.125 &  \\
-claude-haiku-4-5 & T1→T2 & (90, 135) & -0.0108 & --- & -0.038 & 0.079 &  \\
-claude-haiku-4-5 & T2→T3 & (135, 369) & -0.0129 & --- & -0.044 & 0.115 &  \\
-claude-haiku-4-5 & T3→T4 & (369, 126) & -0.0052 & --- & -0.067 & 0.201 &  \\
-claude-haiku-4-5 & T4→T5 & (126, 135) & -0.0284 & --- & -0.019 & 0.055 &  \\
-claude-haiku-4-5 & T5→T6 & (135, 9) & +0.0275 & --- & +0.117 & 0.091 &  \\
-claude-haiku-4-5 & T0→T6 & (216, 9) & +0.0075 & --- & -0.118 & 0.084 &  \\
+T0→T1 & (216, 90) & +0.0373 & --- & +0.057 & 0.125 &  \\
+T1→T2 & (90, 135) & -0.0108 & --- & -0.038 & 0.079 &  \\
+T2→T3 & (135, 369) & +0.0128 & --- & +0.081 & 0.282 &  \\
+T3→T4 & (369, 126) & +0.0068 & --- & +0.031 & 0.086 &  \\
+T4→T5 & (126, 135) & -0.0203 & --- & -0.058 & 0.124 &  \\
+T5→T6 & (135, 9) & +0.0187 & --- & -0.030 & 0.053 &  \\
+T0→T6 & (216, 9) & +0.0445 & --- & +0.045 & 0.052 &  \\
 \midrule
-\multicolumn{8}{l}{\textbf{Omnibus Test (Kruskal-Wallis):}} \\
-\multicolumn{8}{l}{claude-haiku-4-5: $H(6)=5.47$, $p=0.4855$ $p \geq 0.05$ (n.s.), power=1.000} \\
-\multicolumn{8}{l}{\footnotesize Pairwise p-values corrected with Holm-Bonferroni method.} \\
-\multicolumn{8}{l}{\footnotesize N columns show total runs per tier; filtered sample sizes (excluding runs without evaluable output) may be smaller.} \\
+\multicolumn{7}{l}{\textbf{Omnibus Test (Kruskal-Wallis):}} \\
+\multicolumn{7}{l}{$H(6)=5.83$, $p=0.4423$ $p \geq 0.05$ (n.s.), power=1.000} \\
+\multicolumn{7}{l}{\footnotesize Pairwise p-values corrected with Holm-Bonferroni method.} \\
 \bottomrule
 \end{tabular}
 \end{table}

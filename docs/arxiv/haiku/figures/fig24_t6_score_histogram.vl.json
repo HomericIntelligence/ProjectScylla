@@ -29,7 +29,7 @@
   "layer": [
     {
       "data": {
-        "name": "data-59b7cec89575ca047b82c97521ae6e2a"
+        "name": "data-40ff9d2ae108e9a75a3e98f581b4be22"
       },
       "mark": {
         "type": "bar",
@@ -79,7 +79,7 @@
     },
     {
       "data": {
-        "name": "data-413efe69707f2a4b210b96188c88716f"
+        "name": "data-fa6700c101d589234d72b5df7c8210ee"
       },
       "mark": {
         "type": "line",
@@ -110,33 +110,33 @@
     }
   ],
   "data": {
-    "name": "data-59b7cec89575ca047b82c97521ae6e2a"
+    "name": "data-40ff9d2ae108e9a75a3e98f581b4be22"
   },
   "height": 400,
   "title": "Score Distribution - T6 (with KDE Overlay)",
   "width": 600,
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-59b7cec89575ca047b82c97521ae6e2a": [
+    "data-40ff9d2ae108e9a75a3e98f581b4be22": [
       {
         "experiment": "test-001",
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "subtest": "01",
         "run_number": 1,
-        "score": 0.0,
-        "impl_rate": null,
-        "passed": false,
-        "grade": "F",
-        "cost_usd": 0.08275425000000002,
-        "duration_seconds": 21.318099,
-        "agent_duration_seconds": 12.575704,
-        "judge_duration_seconds": 8.742395,
-        "input_tokens": 22,
-        "output_tokens": 655,
-        "cache_creation_tokens": 51475,
-        "cache_read_tokens": 151135,
-        "total_tokens": 203287,
+        "score": 0.9313333333333333,
+        "impl_rate": 0.9857142857142858,
+        "passed": true,
+        "grade": "A",
+        "cost_usd": 0.15862654999999998,
+        "duration_seconds": 144.84896500000002,
+        "agent_duration_seconds": 15.840032,
+        "judge_duration_seconds": 129.008933,
+        "input_tokens": 20,
+        "output_tokens": 743,
+        "cache_creation_tokens": 110403,
+        "cache_read_tokens": 168878,
+        "total_tokens": 280044,
         "exit_code": 0,
         "api_calls": 5,
         "num_turns": null,
@@ -153,21 +153,21 @@
         "tier": "T6",
         "subtest": "01",
         "run_number": 2,
-        "score": 0.0,
-        "impl_rate": null,
-        "passed": false,
-        "grade": "F",
-        "cost_usd": 0.06750115,
-        "duration_seconds": 17.939174,
-        "agent_duration_seconds": 11.514273,
-        "judge_duration_seconds": 6.424901,
-        "input_tokens": 27,
-        "output_tokens": 817,
-        "cache_creation_tokens": 28587,
-        "cache_read_tokens": 276554,
-        "total_tokens": 305985,
+        "score": 0.9366666666666666,
+        "impl_rate": 0.99,
+        "passed": true,
+        "grade": "A",
+        "cost_usd": 0.06489980000000001,
+        "duration_seconds": 135.370705,
+        "agent_duration_seconds": 11.146684,
+        "judge_duration_seconds": 124.224021,
+        "input_tokens": 19,
+        "output_tokens": 697,
+        "cache_creation_tokens": 29098,
+        "cache_read_tokens": 250233,
+        "total_tokens": 280047,
         "exit_code": 0,
-        "api_calls": 6,
+        "api_calls": 5,
         "num_turns": null,
         "num_models": null,
         "delegation_cost_ratio": null,
@@ -182,19 +182,19 @@
         "tier": "T6",
         "subtest": "01",
         "run_number": 3,
-        "score": 0.0,
-        "impl_rate": null,
-        "passed": false,
-        "grade": "F",
-        "cost_usd": 0.06084105000000001,
-        "duration_seconds": 16.472013,
-        "agent_duration_seconds": 12.029149,
-        "judge_duration_seconds": 4.442864,
-        "input_tokens": 22,
-        "output_tokens": 589,
-        "cache_creation_tokens": 28303,
-        "cache_read_tokens": 224953,
-        "total_tokens": 253867,
+        "score": 0.922,
+        "impl_rate": 0.9857142857142858,
+        "passed": true,
+        "grade": "A",
+        "cost_usd": 0.0949337,
+        "duration_seconds": 141.000519,
+        "agent_duration_seconds": 16.116943,
+        "judge_duration_seconds": 124.883576,
+        "input_tokens": 20,
+        "output_tokens": 711,
+        "cache_creation_tokens": 55160,
+        "cache_read_tokens": 224087,
+        "total_tokens": 279978,
         "exit_code": 0,
         "api_calls": 5,
         "num_turns": null,
@@ -380,706 +380,706 @@
         "pr_revert_rate": 0.0
       }
     ],
-    "data-413efe69707f2a4b210b96188c88716f": [
+    "data-fa6700c101d589234d72b5df7c8210ee": [
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.0,
-        "density": 0.5337674395349581,
-        "scaled_density": 5.210454742820955
+        "density": 9.987282037453752e-13,
+        "scaled_density": 3.2792479787006835e-12
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.010101010101010102,
-        "density": 0.5357128474139109,
-        "scaled_density": 5.229445147553103
+        "density": 2.3747604640587202e-12,
+        "scaled_density": 7.79734508593917e-12
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.020202020202020204,
-        "density": 0.5370941840283986,
-        "scaled_density": 5.2429292819931135
+        "density": 5.567989528599552e-12,
+        "scaled_density": 1.82820694745712e-11
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.030303030303030304,
-        "density": 0.53793048473341,
-        "scaled_density": 5.251092962750126
+        "density": 1.2873171853424139e-11,
+        "scaled_density": 4.2268079164579334e-11
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.04040404040404041,
-        "density": 0.5382446740792496,
-        "scaled_density": 5.25415997142454
+        "density": 2.934836660613359e-11,
+        "scaled_density": 9.636312613423166e-11
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.05050505050505051,
-        "density": 0.5380634642363218,
-        "scaled_density": 5.2523910630655894
+        "density": 6.597758056575445e-11,
+        "scaled_density": 2.166323599338061e-10
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.06060606060606061,
-        "density": 0.5374172219765888,
-        "scaled_density": 5.246082667689936
+        "density": 1.4626015240788755e-10,
+        "scaled_density": 4.802340690383654e-10
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.07070707070707072,
-        "density": 0.5363398049336138,
-        "scaled_density": 5.2355652919083475
+        "density": 3.197247073543623e-10,
+        "scaled_density": 1.0497917215120152e-09
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.08080808080808081,
-        "density": 0.5348683681565282,
-        "scaled_density": 5.221201630571855
+        "density": 6.892083683927138e-10,
+        "scaled_density": 2.2629631770483267e-09
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.09090909090909091,
-        "density": 0.5330431422567032,
-        "scaled_density": 5.203384401115618
+        "density": 1.465051760430837e-09,
+        "scaled_density": 4.8103858547981326e-09
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.10101010101010102,
-        "density": 0.5309071847162136,
-        "scaled_density": 5.182533915917411
+        "density": 3.0710557985000174e-09,
+        "scaled_density": 1.008357777615713e-08
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.11111111111111112,
-        "density": 0.5285061061814033,
-        "scaled_density": 5.159095410469256
+        "density": 6.3483274867106e-09,
+        "scaled_density": 2.0844249717647094e-08
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.12121212121212122,
-        "density": 0.5258877738002924,
-        "scaled_density": 5.133536147458894
+        "density": 1.2941146023767503e-08,
+        "scaled_density": 4.2491267174957344e-08
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.13131313131313133,
-        "density": 0.5231019938768164,
-        "scaled_density": 5.106342318949278
+        "density": 2.6015565020537485e-08,
+        "scaled_density": 8.542012600467607e-08
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.14141414141414144,
-        "density": 0.5202001763058136,
-        "scaled_density": 5.0780157707079585
+        "density": 5.157587663052875e-08,
+        "scaled_density": 1.6934546211483257e-07
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.15151515151515152,
-        "density": 0.5172349834185482,
-        "scaled_density": 5.049070574357481
+        "density": 1.0083677947689994e-07,
+        "scaled_density": 3.3108988415292056e-07
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.16161616161616163,
-        "density": 0.5142599660078815,
-        "scaled_density": 5.020029474377893
+        "density": 1.9442716302121543e-07,
+        "scaled_density": 6.383867792566896e-07
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.17171717171717174,
-        "density": 0.5113291894139582,
-        "scaled_density": 4.991420238083411
+        "density": 3.6971550810897504e-07,
+        "scaled_density": 1.2139327077317123e-06
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.18181818181818182,
-        "density": 0.5084968526346779,
-        "scaled_density": 4.96377193750943
+        "density": 6.93360053620976e-07,
+        "scaled_density": 2.27659491923997e-06
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.19191919191919193,
-        "density": 0.5058169034799287,
-        "scaled_density": 4.937611192680093
+        "density": 1.2824446094355997e-06,
+        "scaled_density": 4.21080918463724e-06
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.20202020202020204,
-        "density": 0.5033426528145103,
-        "scaled_density": 4.913458405979973
+        "density": 2.339461453086642e-06,
+        "scaled_density": 7.681443472320745e-06
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.21212121212121213,
-        "density": 0.5011263909321659,
-        "scaled_density": 4.8918240173288865
+        "density": 4.209205315994443e-06,
+        "scaled_density": 1.382060501810963e-05
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.22222222222222224,
-        "density": 0.49921900907277034,
-        "scaled_density": 4.873204809562453
+        "density": 7.4696696265669975e-06,
+        "scaled_density": 2.4526091215430085e-05
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.23232323232323235,
-        "density": 0.49766962903737166,
-        "scaled_density": 4.858080292861119
+        "density": 1.3074665155801397e-05,
+        "scaled_density": 4.292966707414718e-05
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.24242424242424243,
-        "density": 0.4965252437725923,
-        "scaled_density": 4.8469091962583
+        "density": 2.2573516608519813e-05,
+        "scaled_density": 7.411842224246156e-05
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.25252525252525254,
-        "density": 0.495830371688264,
-        "scaled_density": 4.840126093207659
+        "density": 3.8443212006520505e-05,
+        "scaled_density": 0.00012622535820494793
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.26262626262626265,
-        "density": 0.49562672734166413,
-        "scaled_density": 4.838138186915521
+        "density": 6.458104253678412e-05,
+        "scaled_density": 0.000212046933697213
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.27272727272727276,
-        "density": 0.49595291097011773,
-        "scaled_density": 4.841322279664579
+        "density": 0.0001070210843560047,
+        "scaled_density": 0.00035139557813294495
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.2828282828282829,
-        "density": 0.4968441191829333,
-        "scaled_density": 4.850021948687762
+        "density": 0.0001749554137766234,
+        "scaled_density": 0.0005744527738760083
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.29292929292929293,
-        "density": 0.49833187893568176,
-        "scaled_density": 4.864544949316351
+        "density": 0.00028215963657874277,
+        "scaled_density": 0.0009264496731461674
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.30303030303030304,
-        "density": 0.5004438067068055,
-        "scaled_density": 4.885160864144604
+        "density": 0.0004489401835867513,
+        "scaled_density": 0.0014740608947093482
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.31313131313131315,
-        "density": 0.5032033945806553,
-        "scaled_density": 4.912099014845701
+        "density": 0.0007047347999667231,
+        "scaled_density": 0.0023139430323929197
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.32323232323232326,
-        "density": 0.5066298247144738,
-        "scaled_density": 4.945546651062054
+        "density": 0.0010915034015021358,
+        "scaled_density": 0.0035838682733679373
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.33333333333333337,
-        "density": 0.510737813431814,
-        "scaled_density": 4.985647428498701
+        "density": 0.0016680384054812791,
+        "scaled_density": 0.005476877041277734
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.3434343434343435,
-        "density": 0.5155374859435857,
-        "scaled_density": 5.032500185993119
+        "density": 0.002515295180866486,
+        "scaled_density": 0.008258780123320604
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.3535353535353536,
-        "density": 0.5210342824525421,
-        "scaled_density": 5.086158028939416
+        "density": 0.003742787377747041,
+        "scaled_density": 0.012289157247343082
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.36363636363636365,
-        "density": 0.5272288961496693,
-        "scaled_density": 5.146627724030336
+        "density": 0.005496002073180687,
+        "scaled_density": 0.018045704148360486
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.37373737373737376,
-        "density": 0.5341172433636845,
-        "scaled_density": 5.213869407866902
+        "density": 0.007964661237752696,
+        "scaled_density": 0.026151358464684946
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.38383838383838387,
-        "density": 0.5416904658796607,
-        "scaled_density": 5.287796609592032
+        "density": 0.011391487818908369,
+        "scaled_density": 0.03740308250478974
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.393939393939394,
-        "density": 0.5499349652015795,
-        "scaled_density": 5.368276585349831
+        "density": 0.016080930914168977,
+        "scaled_density": 0.0528005116889222
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.4040404040404041,
-        "density": 0.5588324682981607,
-        "scaled_density": 5.455130960073842
+        "density": 0.022407076264917503,
+        "scaled_density": 0.07357192805286594
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.4141414141414142,
-        "density": 0.5683601241433325,
-        "scaled_density": 5.548136669882018
+        "density": 0.030819735098100595,
+        "scaled_density": 0.10119425249585066
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.42424242424242425,
-        "density": 0.5784906301437717,
-        "scaled_density": 5.6470271962190175
+        "density": 0.04184749422829368,
+        "scaled_density": 0.13740305955834087
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.43434343434343436,
-        "density": 0.5891923873375491,
-        "scaled_density": 5.7514940808521775
+        "density": 0.056096358959237924,
+        "scaled_density": 0.18418812149260963
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.4444444444444445,
-        "density": 0.6004296830514042,
-        "scaled_density": 5.861188708909203
+        "density": 0.0742425683323451,
+        "scaled_density": 0.24376981767850414
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.4545454545454546,
-        "density": 0.612162899520812,
-        "scaled_density": 5.975724345355733
+        "density": 0.09701825092091769,
+        "scaled_density": 0.31855203651643976
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.4646464646464647,
-        "density": 0.6243487468078909,
-        "scaled_density": 6.0946784086601005
+        "density": 0.12518885459422507,
+        "scaled_density": 0.41104806777703595
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.4747474747474748,
-        "density": 0.6369405181983481,
-        "scaled_density": 6.2175949638907575
+        "density": 0.15952174904825794,
+        "scaled_density": 0.523777511402556
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.48484848484848486,
-        "density": 0.649888366120927,
-        "scaled_density": 6.343987416147312
+        "density": 0.20074606938576137,
+        "scaled_density": 0.6591344269608682
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.494949494949495,
-        "density": 0.6631395965119645,
-        "scaled_density": 6.473341384046422
+        "density": 0.24950472066167795,
+        "scaled_density": 0.8192297442264705
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.5050505050505051,
-        "density": 0.676638979444267,
-        "scaled_density": 6.605117731974375
+        "density": 0.3063004451010882,
+        "scaled_density": 1.0057141789989372
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.5151515151515152,
-        "density": 0.6903290737540954,
-        "scaled_density": 6.7387557389844295
+        "density": 0.37143888303656236,
+        "scaled_density": 1.2195912780280558
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.5252525252525253,
-        "density": 0.7041505633328953,
-        "scaled_density": 6.873676381561377
+        "density": 0.44497252618238764,
+        "scaled_density": 1.4610333938591233
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.5353535353535354,
-        "density": 0.7180426027017737,
-        "scaled_density": 7.009285707001108
+        "density": 0.5266502405392512,
+        "scaled_density": 1.7292159471355728
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.5454545454545455,
-        "density": 0.7319431694566316,
-        "scaled_density": 7.14497827385916
+        "density": 0.6158774947433423,
+        "scaled_density": 2.022186839412863
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.5555555555555556,
-        "density": 0.74578942116026,
-        "scaled_density": 7.280140635809
+        "density": 0.7116924500056777,
+        "scaled_density": 2.336787946295607
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.5656565656565657,
-        "density": 0.7595180542643729,
-        "scaled_density": 7.414154845315852
+        "density": 0.8127625642453893,
+        "scaled_density": 2.6686439673679025
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.5757575757575758,
-        "density": 0.7730656626691033,
-        "scaled_density": 7.546401953771566
+        "density": 0.9174053004665856,
+        "scaled_density": 3.0122304205712935
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.5858585858585859,
-        "density": 0.7863690935694722,
-        "scaled_density": 7.676265485145848
+        "density": 1.0236349374337357,
+        "scaled_density": 3.361027341491579
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.595959595959596,
-        "density": 0.7993657982970785,
-        "scaled_density": 7.8031348607825475
+        "density": 1.1292354605519472,
+        "scaled_density": 3.707758615011733
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.6060606060606061,
-        "density": 0.8119941759400134,
-        "scaled_density": 7.926408753699455
+        "density": 1.2318572328471853,
+        "scaled_density": 4.044709387111523
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.6161616161616162,
-        "density": 0.8241939076138813,
-        "scaled_density": 8.045498351627401
+        "density": 1.329132835530302,
+        "scaled_density": 4.364106418535328
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.6262626262626263,
-        "density": 0.8359062793607843,
-        "scaled_density": 8.159830509039443
+        "density": 1.4188053807936742,
+        "scaled_density": 4.658539390085643
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.6363636363636365,
-        "density": 0.8470744917701143,
-        "scaled_density": 8.268850769562873
+        "density": 1.498860989559569,
+        "scaled_density": 4.9213958832183256
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.6464646464646465,
-        "density": 0.8576439545437418,
-        "scaled_density": 8.37202624142361
+        "density": 1.5676562072692848,
+        "scaled_density": 5.1472797400803225
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.6565656565656566,
-        "density": 0.8675625643674401,
-        "scaled_density": 8.46884830993177
+        "density": 1.6240310395068016,
+        "scaled_density": 5.33238220736941
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.6666666666666667,
-        "density": 0.8767809645987079,
-        "scaled_density": 8.55883517246516
+        "density": 1.6673990621318462,
+        "scaled_density": 5.4747778060919625
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.6767676767676768,
-        "density": 0.8852527854371857,
-        "scaled_density": 8.641534182930531
+        "density": 1.697807619262433,
+        "scaled_density": 5.574621987053036
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.686868686868687,
-        "density": 0.892934863406083,
-        "scaled_density": 8.716523994266035
+        "density": 1.7159632812512116,
+        "scaled_density": 5.634234720182433
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.696969696969697,
-        "density": 0.8997874391399763,
-        "scaled_density": 8.783416489177887
+        "density": 1.7232202278128823,
+        "scaled_density": 5.658062351418494
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.7070707070707072,
-        "density": 0.9057743326444962,
-        "scaled_density": 8.841858490965347
+        "density": 1.7215317462847457,
+        "scaled_density": 5.652518350941235
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.7171717171717172,
-        "density": 0.9108630953653032,
-        "scaled_density": 8.891533247965922
+        "density": 1.713367306226106,
+        "scaled_density": 5.625711033936354
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.7272727272727273,
-        "density": 0.9150251385758991,
-        "scaled_density": 8.932161686833174
+        "density": 1.7015994734965796,
+        "scaled_density": 5.587072251585691
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.7373737373737375,
-        "density": 0.9182358377648094,
-        "scaled_density": 8.963503431528588
+        "density": 1.6893661541318339,
+        "scaled_density": 5.546905079326811
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.7474747474747475,
-        "density": 0.9204746128711475,
-        "scaled_density": 8.985357586553652
+        "density": 1.6799143335729827,
+        "scaled_density": 5.5158707465159225
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.7575757575757577,
-        "density": 0.9217249843822481,
-        "scaled_density": 8.997563284555723
+        "density": 1.6764317406010545,
+        "scaled_density": 5.504435917779731
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.7676767676767677,
-        "density": 0.9219746054667339,
-        "scaled_density": 9.0
+        "density": 1.6818729364100236,
+        "scaled_density": 5.522301669734429
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.7777777777777778,
-        "density": 0.9212152704699549,
-        "scaled_density": 8.992587632099095
+        "density": 1.6987864429597401,
+        "scaled_density": 5.577835880101076
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.787878787878788,
-        "density": 0.9194429002452218,
-        "scaled_density": 8.975286361621562
+        "density": 1.729149862074204,
+        "scaled_density": 5.677531853824607
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.797979797979798,
-        "density": 0.9166575049327621,
-        "scaled_density": 8.948096287552822
+        "density": 1.7742205606482728,
+        "scaled_density": 5.82551805932414
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.8080808080808082,
-        "density": 0.9128631249280863,
-        "scaled_density": 8.911056850848603
+        "density": 1.8344103130862905,
+        "scaled_density": 6.023146526489351
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.8181818181818182,
-        "density": 0.908067750901838,
-        "scaled_density": 8.86424605369613
+        "density": 1.9091930446107106,
+        "scaled_density": 6.268689928862007
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.8282828282828284,
-        "density": 0.9022832238436772,
-        "scaled_density": 8.807779483776786
+        "density": 1.9970551323567296,
+        "scaled_density": 6.557178401066014
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.8383838383838385,
-        "density": 0.8955251162029146,
-        "scaled_density": 8.741809154001734
+        "density": 2.095497175802604,
+        "scaled_density": 6.880405351880502
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.8484848484848485,
-        "density": 0.8878125952881933,
-        "scaled_density": 8.666522169066447
+        "density": 2.2010943827491345,
+        "scaled_density": 7.2271257370035515
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.8585858585858587,
-        "density": 0.8791682701673198,
-        "scaled_density": 8.58213923093934
+        "density": 2.309619532878293,
+        "scaled_density": 7.583459800530171
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.8686868686868687,
-        "density": 0.8696180233763083,
-        "scaled_density": 8.488912996063174
+        "density": 2.4162279246168095,
+        "scaled_density": 7.933500333890526
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.8787878787878789,
-        "density": 0.8591908288038402,
-        "scaled_density": 8.387126297605567
+        "density": 2.515698115300701,
+        "scaled_density": 8.260103127841747
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.888888888888889,
-        "density": 0.8479185571637693,
-        "scaled_density": 8.277090246548303
+        "density": 2.6027162318664057,
+        "scaled_density": 8.545820484964844
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.8989898989898991,
-        "density": 0.8358357705041825,
-        "scaled_density": 8.159142225755224
+        "density": 2.6721859563020898,
+        "scaled_density": 8.773919033280889
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.9090909090909092,
-        "density": 0.8229795072271417,
-        "scaled_density": 8.033643791408661
+        "density": 2.7195418444039245,
+        "scaled_density": 8.929408484520126
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.9191919191919192,
-        "density": 0.8093890591088387,
-        "scaled_density": 7.900978496356626
+        "density": 2.7410412058162974,
+        "scaled_density": 9.0
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.9292929292929294,
-        "density": 0.7951057418158867,
-        "scaled_density": 7.761549649971543
+        "density": 2.7340099177289816,
+        "scaled_density": 8.97691330117491
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.9393939393939394,
-        "density": 0.7801726604102025,
-        "scaled_density": 7.615778029089294
+        "density": 2.697020479528293,
+        "scaled_density": 8.855461298519934
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.9494949494949496,
-        "density": 0.7646344713228096,
-        "scaled_density": 7.464099554479093
+        "density": 2.629986152606854,
+        "scaled_density": 8.63535919242508
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.9595959595959597,
-        "density": 0.7485371422563871,
-        "scaled_density": 7.306962947094489
+        "density": 2.5341625860198316,
+        "scaled_density": 8.320729810913695
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.9696969696969697,
-        "density": 0.7319277114478704,
-        "scaled_density": 7.144827378077404
+        "density": 2.412057008632617,
+        "scaled_density": 7.9198054489766925
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.9797979797979799,
-        "density": 0.7148540476864036,
-        "scaled_density": 6.978160126135674
+        "density": 2.26725379802702,
+        "scaled_density": 7.444355137363349
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 0.98989898989899,
-        "density": 0.6973646124388504,
-        "scaled_density": 6.80743425549383
+        "density": 2.104172930993899,
+        "scaled_density": 6.908891533173936
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "score": 1.0,
-        "density": 0.6795082253853475,
-        "scaled_density": 6.633126327131562
+        "density": 1.927783551222279,
+        "scaled_density": 6.329730441185968
       }
     ]
   }

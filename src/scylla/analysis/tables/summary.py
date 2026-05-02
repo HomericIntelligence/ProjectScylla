@@ -96,7 +96,7 @@ def table01_tier_summary(runs_df: pd.DataFrame) -> tuple[str, str]:
             f"({row['PR 95% CI Low']:{_FMT_RATE}}, {row['PR 95% CI High']:{_FMT_RATE}})"
         )
         score_str = f"{row['Mean Score']:{_FMT_RATE}} ± {row['Score StdDev']:{_FMT_RATE}}"
-        cop_str = f"{row['CoP']:{_FMT_COST}}" if row["CoP"] is not None else "∞"
+        cop_str = f"{row['CoP']:{_FMT_COST}}" if pd.notna(row["CoP"]) else "∞"
 
         md_lines.append(
             f"| {row['Model']} | {row['Tier']} | {row['Subtests']} | "
@@ -125,7 +125,7 @@ def table01_tier_summary(runs_df: pd.DataFrame) -> tuple[str, str]:
             f"({row['PR 95% CI Low']:{_FMT_RATE}}, {row['PR 95% CI High']:{_FMT_RATE}})"
         )
         score_str = f"{row['Mean Score']:{_FMT_RATE}} $\\pm$ {row['Score StdDev']:{_FMT_RATE}}"
-        cop_str = f"{row['CoP']:{_FMT_COST}}" if row["CoP"] is not None else "$\\infty$"
+        cop_str = f"{row['CoP']:{_FMT_COST}}" if pd.notna(row["CoP"]) else "$\\infty$"
 
         latex_lines.append(
             f"{row['Model']} & {row['Tier']} & {row['Subtests']} & "
@@ -227,7 +227,7 @@ def table05_cost_analysis(runs_df: pd.DataFrame) -> tuple[str, str]:
     for _, row in df.iterrows():
         cop_str = (
             f"{row['CoP']:{_FMT_COST}}"
-            if row["CoP"] is not None
+            if pd.notna(row["CoP"])
             else "∞"
             if row["Tier"] != "**Total**"
             else "—"
@@ -259,14 +259,16 @@ def table05_cost_analysis(runs_df: pd.DataFrame) -> tuple[str, str]:
     for _, row in df.iterrows():
         cop_str = (
             f"{row['CoP']:{_FMT_COST}}"
-            if row["CoP"] is not None
+            if pd.notna(row["CoP"])
             else "$\\infty$"
             if row["Tier"] != "**Total**"
-            else "---"
+            else "--"
         )
 
+        tier_str = r"\textbf{Total}" if row["Tier"] == "**Total**" else row["Tier"]
+
         latex_lines.append(
-            f"{row['Model']} & {row['Tier']} & {row['Mean Cost']:{_FMT_COST}} & "
+            f"{row['Model']} & {tier_str} & {row['Mean Cost']:{_FMT_COST}} & "
             f"{row['Total Cost']:{_FMT_COST}} & {cop_str} & "
             f"{row['Input Tokens']:.0f} & {row['Output Tokens']:.0f} & "
             f"{row['Cache Read']:.0f} & {row['Cache Create']:.0f} \\\\"
@@ -331,7 +333,7 @@ def table11_experiment_overview(runs_df: pd.DataFrame) -> tuple[str, str]:
     )
 
     for _, row in df.iterrows():
-        cop_str = f"{row['CoP']:{_FMT_COST}}" if row["CoP"] is not None else "∞"
+        cop_str = f"{row['CoP']:{_FMT_COST}}" if pd.notna(row["CoP"]) else "∞"
         md_lines.append(
             f"| {row['Experiment']} | {row['Runs']} | "
             f"{row['Pass Rate']:{_FMT_RATE}} | {row['Best Tier']} | "
@@ -356,7 +358,7 @@ def table11_experiment_overview(runs_df: pd.DataFrame) -> tuple[str, str]:
     ]
 
     for _, row in df.iterrows():
-        cop_str = f"{row['CoP']:{_FMT_COST}}" if row["CoP"] is not None else "$\\infty$"
+        cop_str = f"{row['CoP']:{_FMT_COST}}" if pd.notna(row["CoP"]) else "$\\infty$"
         latex_lines.append(
             f"{row['Experiment']} & {row['Runs']} & "
             f"{row['Pass Rate']:{_FMT_RATE}} & {row['Best Tier']} & "

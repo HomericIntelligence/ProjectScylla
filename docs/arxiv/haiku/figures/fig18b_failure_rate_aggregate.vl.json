@@ -26,7 +26,7 @@
     }
   },
   "data": {
-    "name": "data-992907903db3931b67f7079acfd4b12f"
+    "name": "data-97f4f203f116f291fbf79a86e061db47"
   },
   "facet": {
     "column": {
@@ -132,7 +132,7 @@
   "title": "Aggregate Failure Rate by Tier (Summary)",
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-992907903db3931b67f7079acfd4b12f": [
+    "data-97f4f203f116f291fbf79a86e061db47": [
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T0",
@@ -157,28 +157,28 @@
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
-        "failure_rate": 0.24119241192411922,
+        "failure_rate": 0.024390243902439046,
         "n_runs": 369,
         "n_subtests": 41
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "failure_rate": 0.3571428571428571,
+        "failure_rate": 0.023809523809523836,
         "n_runs": 126,
         "n_subtests": 14
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
-        "failure_rate": 0.37037037037037035,
+        "failure_rate": 0.03703703703703709,
         "n_runs": 135,
         "n_subtests": 15
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
-        "failure_rate": 0.33333333333333337,
+        "failure_rate": 0.0,
         "n_runs": 9,
         "n_subtests": 1
       }
