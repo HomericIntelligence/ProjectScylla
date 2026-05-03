@@ -51,7 +51,7 @@ analysis = [
     "seaborn>=0.13.2,<1",
     "scipy>=1.15.3,<2",
     "altair>=5.0,<7",
-    "vl-convert-python>=1.0,<2",
+    "vl-convert-python>=1.9.0.post1,<2",
     "krippendorff>=0.8.2,<1",
 ]
 
