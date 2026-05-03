@@ -45,7 +45,7 @@ nats = [
     "nats-py>=2.0,<3",
 ]
 analysis = [
-    "matplotlib>=3.10.8,<4",
+    "matplotlib>=3.10.9,<4",
     "numpy>=1.24,<3",
     "pandas>=2.0,<3",
     "seaborn>=0.13.2,<1",
