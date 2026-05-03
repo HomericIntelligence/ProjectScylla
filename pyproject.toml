@@ -73,6 +73,14 @@ packages = ["src/scylla"]
 "src/scylla/analysis/schemas" = "scylla/analysis/schemas"
 "src/scylla/py.typed" = "scylla/py.typed"
 
+[tool.hatch.build.targets.sdist]
+include = [
+  "src/scylla",
+  "tests",
+  "pyproject.toml",
+  "README.md",
+]
+
 [tool.ruff]
 line-length = 100
 target-version = "py310"
