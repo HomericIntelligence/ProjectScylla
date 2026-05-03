@@ -24,19 +24,21 @@ def test_py_typed_marker_exists() -> None:
 
 
 def test_py_typed_in_hatch_build_targets() -> None:
-    """py.typed must be listed in hatch wheel force-include so it ships in the wheel."""
+    """py.typed must be covered by the hatch wheel packages config so it ships in the wheel.
+
+    Hatchling automatically includes py.typed when the package directory is listed in
+    [tool.hatch.build.targets.wheel] packages — no force-include entry is needed.
+    """
     with PYPROJECT.open("rb") as fh:
         data = tomllib.load(fh)
 
-    force_include: dict[str, str] = (
-        data.get("tool", {})
-        .get("hatch", {})
-        .get("build", {})
-        .get("targets", {})
-        .get("wheel", {})
-        .get("force-include", {})
+    wheel: dict[str, object] = (
+        data.get("tool", {}).get("hatch", {}).get("build", {}).get("targets", {}).get("wheel", {})
     )
 
-    assert "src/scylla/py.typed" in force_include, (
-        "src/scylla/py.typed is not in [tool.hatch.build.targets.wheel.force-include]"
+    packages: list[str] = wheel.get("packages", [])  # type: ignore[assignment]
+
+    assert any("scylla" in pkg for pkg in packages), (
+        "src/scylla is not listed in [tool.hatch.build.targets.wheel] packages — "
+        "py.typed will not be included in the wheel"
     )
