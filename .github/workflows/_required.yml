@@ -310,9 +310,15 @@ jobs:
             docker build --check -f "$df" ./docker || exit 1
           done
 
+      - name: Install build backend dependencies
+        run: |
+          # --no-isolation skips the isolated venv, so the build backend must be
+          # present in the active environment.  Install both the 'build' frontend
+          # and hatchling (declared in pyproject.toml [build-system].requires).
+          pixi run pip install build "hatchling>=1.29.0,<2"
+
       - name: Build Python package (sdist + wheel)
         run: |
-          pixi run pip install build
           pixi run python -m build --no-isolation
           ls -lh dist/
 
