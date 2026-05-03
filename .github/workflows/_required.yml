@@ -312,7 +312,6 @@ jobs:
 
       - name: Build Python package (sdist + wheel)
         run: |
-          pixi run pip install build
           pixi run python -m build --no-isolation
           ls -lh dist/
 
