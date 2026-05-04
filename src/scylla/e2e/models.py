@@ -247,18 +247,7 @@ class SubTestConfig(BaseModel):
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
-        return {
-            "id": self.id,
-            "name": self.name,
-            "description": self.description,
-            "claude_md_path": str(self.claude_md_path) if self.claude_md_path else None,
-            "claude_dir_path": str(self.claude_dir_path) if self.claude_dir_path else None,
-            "extends_previous": self.extends_previous,
-            "resources": self.resources,
-            "inherit_best_from": [tier.value for tier in self.inherit_best_from],
-            "agent_teams": self.agent_teams,
-            "system_prompt_mode": self.system_prompt_mode,
-        }
+        return self.model_dump(mode="json")
 
 
 class TierConfig(BaseModel):
@@ -285,12 +274,7 @@ class TierConfig(BaseModel):
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
-        return {
-            "tier_id": self.tier_id.value,
-            "subtests": [s.to_dict() for s in self.subtests],
-            "tools_enabled": self.tools_enabled,
-            "delegation_enabled": self.delegation_enabled,
-        }
+        return self.model_dump(mode="json")
 
 
 class JudgeResultSummary(BaseModel):
@@ -321,16 +305,7 @@ class JudgeResultSummary(BaseModel):
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
-        return {
-            "model": self.model,
-            "score": self.score,
-            "passed": self.passed,
-            "grade": self.grade,
-            "reasoning": self.reasoning,
-            "judge_number": self.judge_number,
-            "is_valid": self.is_valid,
-            "criteria_scores": self.criteria_scores,
-        }
+        return self.model_dump(mode="json")
 
 
 class E2ERunResult(RunResultBase):
@@ -402,28 +377,11 @@ class E2ERunResult(RunResultBase):
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
-        return {
-            "run_number": self.run_number,
-            "exit_code": self.exit_code,
-            "token_stats": self.token_stats.to_dict(),
-            # Legacy fields for backwards compatibility
-            "tokens_input": self.tokens_input,
-            "tokens_output": self.tokens_output,
-            "cost_usd": self.cost_usd,
-            "duration_seconds": self.duration_seconds,
-            "agent_duration_seconds": self.agent_duration_seconds,
-            "judge_duration_seconds": self.judge_duration_seconds,
-            "judge_score": self.judge_score,
-            "judge_passed": self.judge_passed,
-            "judge_grade": self.judge_grade,
-            "judge_reasoning": self.judge_reasoning,
-            "judges": [j.to_dict() for j in self.judges],
-            "workspace_path": str(self.workspace_path),
-            "logs_path": str(self.logs_path),
-            "command_log_path": str(self.command_log_path) if self.command_log_path else None,
-            "criteria_scores": self.criteria_scores,
-            "baseline_pipeline_summary": self.baseline_pipeline_summary,
-        }
+        d = self.model_dump(mode="json")
+        # Inject legacy properties for backwards compatibility (not stored as model fields)
+        d["tokens_input"] = self.tokens_input
+        d["tokens_output"] = self.tokens_output
+        return d
 
 
 class SubTestResult(BaseModel):
@@ -477,35 +435,7 @@ class SubTestResult(BaseModel):
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
-        return {
-            "subtest_id": self.subtest_id,
-            "tier_id": self.tier_id.value,
-            "runs": [r.to_dict() for r in self.runs],
-            "pass_rate": self.pass_rate,
-            "mean_score": self.mean_score,
-            "median_score": self.median_score,
-            "std_dev_score": self.std_dev_score,
-            "mean_cost": self.mean_cost,
-            "total_cost": self.total_cost,
-            "token_stats": self.token_stats.to_dict(),
-            "consistency": self.consistency,
-            "grade_distribution": self.grade_distribution,
-            "modal_grade": self.modal_grade,
-            "min_grade": self.min_grade,
-            "max_grade": self.max_grade,
-            "selected_as_best": self.selected_as_best,
-            "selection_reason": self.selection_reason,
-            "rate_limit_info": (
-                {
-                    "source": self.rate_limit_info.source,
-                    "retry_after_seconds": self.rate_limit_info.retry_after_seconds,
-                    "error_message": self.rate_limit_info.error_message,
-                    "detected_at": self.rate_limit_info.detected_at,
-                }
-                if self.rate_limit_info
-                else None
-            ),
-        }
+        return self.model_dump(mode="json")
 
 
 class TierBaseline(BaseModel):
@@ -535,13 +465,7 @@ class TierBaseline(BaseModel):
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
-        return {
-            "tier_id": self.tier_id.value,
-            "subtest_id": self.subtest_id,
-            "claude_md_path": str(self.claude_md_path) if self.claude_md_path else None,
-            "claude_dir_path": str(self.claude_dir_path) if self.claude_dir_path else None,
-            "resources": self.resources,
-        }
+        return self.model_dump(mode="json")
 
 
 class ResourceManifest(BaseModel):
@@ -573,15 +497,7 @@ class ResourceManifest(BaseModel):
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
-        return {
-            "tier_id": self.tier_id,
-            "subtest_id": self.subtest_id,
-            "fixture_config_path": self.fixture_config_path,
-            "resources": self.resources,
-            "composed_at": self.composed_at,
-            "claude_md_hash": self.claude_md_hash,
-            "inherited_from": self.inherited_from,
-        }
+        return self.model_dump(mode="json")
 
     def save(self, path: Path) -> None:
         """Save manifest to JSON file."""
@@ -652,18 +568,10 @@ class TierResult(BaseModel):
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
-        return {
-            "tier_id": self.tier_id.value,
-            "subtest_results": {k: v.to_dict() for k, v in self.subtest_results.items()},
-            "best_subtest": self.best_subtest,
-            "best_subtest_score": self.best_subtest_score,
-            "inherited_from": self.inherited_from.to_dict() if self.inherited_from else None,
-            "tiebreaker_needed": self.tiebreaker_needed,
-            "total_cost": self.total_cost,
-            "total_duration": self.total_duration,
-            "cost_of_pass": self.cost_of_pass,
-            "token_stats": self.token_stats.to_dict(),
-        }
+        d = self.model_dump(mode="json")
+        # Inject computed property (not stored as a model field)
+        d["cost_of_pass"] = self.cost_of_pass
+        return d
 
 
 class TestFixture(BaseModel):
@@ -930,30 +838,35 @@ class ExperimentConfig(BaseModel):
         return [normalize_model_id(m) for m in v]
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for JSON serialization."""
-        return {
-            "experiment_id": self.experiment_id,
-            "task_repo": self.task_repo,
-            "task_commit": self.task_commit,
-            "task_prompt_file": str(self.task_prompt_file),
-            "language": self.language,
-            "models": self.models,
-            "runs_per_subtest": self.runs_per_subtest,
-            "tiers_to_run": [t.value for t in self.tiers_to_run],
-            "judge_models": self.judge_models,
-            "timeout_seconds": self.timeout_seconds,
-            "max_turns": self.max_turns,
-            "max_subtests": self.max_subtests,
-            "skip_agent_teams": self.skip_agent_teams,
-            "thinking_mode": self.thinking_mode,
-            "use_containers": self.use_containers,
-            "agamemnon": {
-                "enabled": self.agamemnon.enabled,
-                "failure_type": self.agamemnon.failure_type,
-                "failure_duration_seconds": self.agamemnon.failure_duration_seconds,
-                "failure_parameters": self.agamemnon.failure_parameters,
-            },
+        """Convert to dictionary for JSON serialization.
+
+        Ephemeral runtime-only fields (resume/filter controls) are excluded so
+        that the serialized form matches what is written to experiment.json.
+        """
+        # These fields control resume/filter behaviour and must not appear in
+        # the persisted config.  Keep this list in sync with the model fields
+        # that are annotated "Ephemeral" in the class docstring.
+        _ephemeral: set[str] = {
+            "criteria_file",
+            "rubric_file",
+            "until_run_state",
+            "until_tier_state",
+            "until_experiment_state",
+            "from_run_state",
+            "from_tier_state",
+            "from_experiment_state",
+            "filter_tiers",
+            "filter_subtests",
+            "filter_runs",
+            "filter_statuses",
+            "filter_judge_slots",
+            "keep_failed_workspaces",
+            "max_concurrent_workspaces",
+            "max_concurrent_agents",
+            "off_peak",
+            "agamemnon_url",
         }
+        return self.model_dump(mode="json", exclude=_ephemeral)
 
     def save(self, path: Path) -> None:
         """Save configuration to JSON file."""
@@ -1038,19 +951,10 @@ class ExperimentResult(BaseModel):
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
-        return {
-            "config": self.config.to_dict(),
-            "tier_results": {k.value: v.to_dict() for k, v in self.tier_results.items()},
-            "best_overall_tier": self.best_overall_tier.value if self.best_overall_tier else None,
-            "best_overall_subtest": self.best_overall_subtest,
-            "frontier_cop": self.frontier_cop,
-            "frontier_cop_tier": self.frontier_cop_tier.value if self.frontier_cop_tier else None,
-            "total_cost": self.total_cost,
-            "total_duration_seconds": self.total_duration_seconds,
-            "token_stats": self.token_stats.to_dict(),
-            "started_at": self.started_at,
-            "completed_at": self.completed_at,
-        }
+        d = self.model_dump(mode="json")
+        # config.to_dict() omits ephemeral fields; replace the full model_dump of config with it
+        d["config"] = self.config.to_dict()
+        return d
 
     def save(self, path: Path) -> None:
         """Save results to JSON file."""
