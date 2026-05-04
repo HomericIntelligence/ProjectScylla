@@ -34,12 +34,7 @@ class JudgeVote(BaseModel):
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
-        return {
-            "subtest_id": self.subtest_id,
-            "score": self.score,
-            "confidence": self.confidence,
-            "reasoning": self.reasoning,
-        }
+        return self.model_dump(mode="json")
 
 
 class JudgeSelection(BaseModel):
@@ -64,16 +59,7 @@ class JudgeSelection(BaseModel):
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
-        return {
-            "winning_subtest": self.winning_subtest,
-            "winning_score": self.winning_score,
-            "votes": [v.to_dict() for v in self.votes],
-            "margin": self.margin,
-            "tiebreaker_needed": self.tiebreaker_needed,
-            "tiebreaker_result": self.tiebreaker_result.to_dict()
-            if self.tiebreaker_result
-            else None,
-        }
+        return self.model_dump(mode="json")
 
 
 def select_best_subtest(

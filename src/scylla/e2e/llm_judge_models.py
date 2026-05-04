@@ -37,14 +37,7 @@ class JudgeResult(BaseModel):
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
-        return {
-            "score": self.score,
-            "passed": self.passed,
-            "grade": self.grade,
-            "reasoning": self.reasoning,
-            "is_valid": self.is_valid,
-            "criteria_scores": self.criteria_scores,
-        }
+        return self.model_dump(mode="json", exclude={"raw_response"})
 
 
 # Alias for industry-aligned grade assignment
