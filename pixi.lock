@@ -5321,7 +5321,7 @@ packages:
 - pypi: ./
   name: scylla
   version: 0.1.0
-  sha256: 0b59bb5a3f883fb15d8353021b5300404675993e294d2e658b75e738eac6a48f
+  sha256: 3f36c3f099e3279f45694718e043f8ab78303c4ca497c9570fbabffaa5aaf126
   requires_dist:
   - click>=8.0,<9
   - homericintelligence-hephaestus>=0.7.0,<1
@@ -5331,7 +5331,7 @@ packages:
   - pytest>=9.0.3,<10 ; extra == 'dev'
   - pytest-asyncio>=1.3.0,<2 ; extra == 'dev'
   - pytest-cov>=7.1.0,<8 ; extra == 'dev'
-  - pre-commit>=4.5.1,<5 ; extra == 'dev'
+  - pre-commit>=4.6.0,<5 ; extra == 'dev'
   - ruff>=0.1.0,<1 ; extra == 'dev'
   - defusedxml>=0.7,<1 ; extra == 'dev'
   - nats-py>=2.0,<3 ; extra == 'nats'
