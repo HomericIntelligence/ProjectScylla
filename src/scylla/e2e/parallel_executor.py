@@ -4,7 +4,6 @@ This module handles:
 - Sequential execution of subtests
 - Rate limit detection and coordination
 - Retry logic for rate-limited subtests
-- Async failure injection/cleanup via ``AsyncAgamemnonClient``
 """
 
 from __future__ import annotations
@@ -17,10 +16,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from scylla.adapters.agamemnon_client import (
-    AgamemnonConnectionError,
-    AsyncAgamemnonClient,
-)
 from scylla.e2e.models import (
     ExperimentConfig,
     SubTestResult,
@@ -161,68 +156,6 @@ class RateLimitCoordinator:
         return self._shutdown_event.is_set()
 
 
-async def _async_inject_failure(
-    client: AsyncAgamemnonClient,
-    tier_id: TierID,
-    subtest_id: str,
-) -> None:
-    """Inject a failure via the async Agamemnon client before a subtest.
-
-    Logs a warning and continues on connection failure so that a missing
-    Agamemnon service does not abort the experiment.
-
-    Args:
-        client: Async Agamemnon client instance.
-        tier_id: Current tier identifier (included in the failure spec).
-        subtest_id: Current subtest identifier (included in the failure spec).
-
-    """
-    spec = {"tier": tier_id.value, "subtest": subtest_id}
-    try:
-        await client.inject_failure(spec)
-        logger.info(
-            "Failure injected for tier %s subtest %s",
-            tier_id.value,
-            subtest_id,
-        )
-    except AgamemnonConnectionError:
-        logger.warning(
-            "Could not inject failure for %s/%s — Agamemnon unreachable, continuing",
-            tier_id.value,
-            subtest_id,
-        )
-
-
-async def _async_cleanup_failure(
-    client: AsyncAgamemnonClient,
-    tier_id: TierID,
-    subtest_id: str,
-) -> None:
-    """Clean up injected failures after a subtest completes.
-
-    Logs a warning on connection failure; does not raise.
-
-    Args:
-        client: Async Agamemnon client instance.
-        tier_id: Current tier identifier (for logging).
-        subtest_id: Current subtest identifier (for logging).
-
-    """
-    try:
-        await client.cleanup_failure()
-        logger.info(
-            "Failure cleaned up for tier %s subtest %s",
-            tier_id.value,
-            subtest_id,
-        )
-    except AgamemnonConnectionError:
-        logger.warning(
-            "Could not clean up failure for %s/%s — Agamemnon unreachable",
-            tier_id.value,
-            subtest_id,
-        )
-
-
 def run_tier_subtests_parallel(
     config: ExperimentConfig,
     tier_id: TierID,
@@ -237,9 +170,6 @@ def run_tier_subtests_parallel(
     resource_manager: ResourceManager | None = None,
 ) -> dict[str, SubTestResult]:
     """Run all sub-tests for a tier sequentially with rate limit handling.
-
-    When ``config.agamemnon_url`` is set, failure injection and cleanup are
-    performed asynchronously via ``AsyncAgamemnonClient`` around each subtest.
 
     Args:
         config: Experiment configuration
@@ -266,12 +196,6 @@ def run_tier_subtests_parallel(
         config, tier_manager, workspace_manager, resource_manager=resource_manager
     )
 
-    # Build async Agamemnon client when a URL is configured
-    agamemnon_client: AsyncAgamemnonClient | None = None
-    if config.agamemnon_url:
-        agamemnon_client = AsyncAgamemnonClient(base_url=config.agamemnon_url)
-        logger.info("Agamemnon failure injection enabled at %s", config.agamemnon_url)
-
     total_subtests = len(tier_config.subtests)
     start_time = time.time()
     completed_count = 0
@@ -296,10 +220,6 @@ def run_tier_subtests_parallel(
 
         subtest_dir = results_dir / subtest.id
         set_log_context(tier_id=tier_id.value, subtest_id=subtest.id)
-
-        # Inject failure before subtest (async, non-blocking)
-        if agamemnon_client is not None:
-            _run_async(_async_inject_failure(agamemnon_client, tier_id, subtest.id))
 
         try:
             results[subtest.id] = executor.run_subtest(
@@ -344,10 +264,6 @@ def run_tier_subtests_parallel(
                 experiment_dir=experiment_dir,
                 completed_count=completed_count,
             )
-        finally:
-            # Always clean up injected failure after subtest completes
-            if agamemnon_client is not None:
-                _run_async(_async_cleanup_failure(agamemnon_client, tier_id, subtest.id))
 
     return results
 
