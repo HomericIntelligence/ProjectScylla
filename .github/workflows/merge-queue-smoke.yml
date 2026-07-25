@@ -59,6 +59,6 @@ jobs:
       # Borrowed from markdownlint: globs and rule config come from
       # .markdownlint-cli2.yaml at the repo root.
       - name: Run markdownlint-cli2
-        uses: DavidAnson/markdownlint-cli2-action@8de2aa07cae85fd17c0b35642db70cf5495f1d25  # v20.0.0
+        uses: DavidAnson/markdownlint-cli2-action@6bf21b07787794f89a243495939cd651942aeabe  # v20.0.0
         with:
           globs: "**/*.md"
