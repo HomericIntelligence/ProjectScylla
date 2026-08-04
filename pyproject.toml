@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "AI agent testing and optimization framework"
 readme = "README.md"
 license = {text = "BSD 3-Clause"}
-requires-python = ">=3.10"
+requires-python = ">=3.13,<3.14"
 authors = [
     { name = "Micah Villmow <research@villmow.us>" },
 ]
@@ -21,6 +21,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 keywords = ["ai", "agents", "benchmarking", "evaluation", "testing"]
