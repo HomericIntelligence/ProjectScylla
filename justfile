@@ -53,6 +53,30 @@ ci-test:
 ci-all:
     ./scripts/run_ci_local.sh all
 
+# Run the lint job subset in container
+ci-lint:
+    ./scripts/run_ci_local.sh lint
+
+# Run the unit-tests job subset in container
+ci-unit:
+    ./scripts/run_ci_local.sh unit
+
+# Run the integration-tests job subset in container
+ci-integration:
+    ./scripts/run_ci_local.sh integration
+
+# Run the secrets scan in container
+ci-secrets:
+    ./scripts/run_ci_local.sh secrets
+
+# Run the schema validation in container
+ci-schema:
+    ./scripts/run_ci_local.sh schema
+
+# Run the deps/version-sync checks in container
+ci-deps:
+    ./scripts/run_ci_local.sh deps
+
 # Run pip-audit security scan
 audit:
     uv run pip-audit --format json | uv run python scripts/filter_audit.py

@@ -111,43 +111,28 @@ jobs:
   # workflow's single concurrency group.
   lint:
     name: lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v6
         with:
           fetch-depth: 0
 
-      - name: Setup uv
-        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78  # v7
-        with:
-          enable-cache: true
-
-      - name: Cache pre-commit environments
+      - name: Cache podman container storage
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v5
         with:
-          path: ~/.cache/pre-commit
-          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          path: ~/.local/share/containers/storage
+          key: podman-scylla-${{{{ runner.os }}}}-${{{{ hashFiles('pyproject.toml', 'uv.lock', '.pre-commit-config.yaml') }}}}
           restore-keys: |
-            pre-commit-${{ runner.os }}-
+            podman-scylla-${{{{ runner.os }}}}-
 
-      - name: Run pre-commit
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          BASE_REF: ${{ github.base_ref }}
-        run: |
-          uv sync --all-groups --all-extras --locked
-          uv --version
-          uv run pre-commit run --all-files --show-diff-on-failure
-
-      - name: Enforce complexity limit (C901)
-        run: uv run ruff check --select C901 src/scylla/ scripts/
-
-      - name: Run mypy
-        run: uv run mypy scripts/ src/scylla/ tests/
-
-      - name: Check import layering contracts
-        run: uv run lint-imports
+      - name: Build CI image (podman)
+        run: podman build -f ci/Containerfile -t scylla-ci:local .
+      # Pre-commit (with baked hook envs), ruff C901, mypy, and lint-imports
+      # all run inside the CI container — the same image developers use via
+      # `just ci-lint`.
+      - name: Lint (in container)
+        run: bash scripts/run_ci_local.sh lint
 
       - name: Upload pre-commit diff
         if: failure()
@@ -157,109 +142,29 @@ jobs:
           retention-days: 7
           path: |
             .git/pre-commit-*
-
-  # ── 2. unit-tests ──────────────────────────────────────────────────────────
-  # Emits the required `unit-tests` context. Split out of the former test.yml
-  # matrix (deleted in this change) into a discrete job so the emitted name is
-  # `unit-tests`, not `test (unit, tests/unit)`.
   unit-tests:
     name: unit-tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v6
 
-      - name: Enforce no new deprecated BaseExecutionInfo usage
-        run: |
-          count=$(grep -rn "BaseExecutionInfo" . \
-            --include="*.py" \
-            --exclude-dir=".venv" \
-            | grep -v "src/scylla/core/results.py" \
-            | grep -v "src/scylla/core/__init__.py" \
-            | grep -v "# deprecated" \
-            | grep -v "(deprecated)" \
-            | grep -v "test_results.py" \
-            | wc -l)
-          echo "BaseExecutionInfo usage count (excluding definition, re-export, and tests): $count"
-          if [ "$count" -gt "0" ]; then
-            echo "::error::Found $count usages of deprecated BaseExecutionInfo — remove before merging"
-            grep -rn "BaseExecutionInfo" . --include="*.py" --exclude-dir=".venv" \
-              | grep -v "src/scylla/core/results.py" \
-              | grep -v "src/scylla/core/__init__.py" \
-              | grep -v "# deprecated" \
-              | grep -v "(deprecated)" \
-              | grep -v "test_results.py"
-            exit 1
-          fi
-
-      - name: Enforce no new deprecated BaseRunMetrics usage
-        run: |
-          count=$(grep -rn "BaseRunMetrics" . \
-            --include="*.py" \
-            --exclude-dir=".venv" \
-            | grep -v "src/scylla/core/results.py" \
-            | grep -v "# deprecated" \
-            | grep -v "(deprecated)" \
-            | grep -v "test_results.py" \
-            | wc -l)
-          echo "BaseRunMetrics usage count (excluding definition and tests): $count"
-          if [ "$count" -gt "0" ]; then
-            echo "::error::Found $count usages of deprecated BaseRunMetrics — remove before merging"
-            grep -rn "BaseRunMetrics" . --include="*.py" --exclude-dir=".venv" \
-              | grep -v "src/scylla/core/results.py" \
-              | grep -v "# deprecated" \
-              | grep -v "(deprecated)" \
-              | grep -v "test_results.py"
-            exit 1
-          fi
-
-      - name: Enforce tier label consistency in metrics-definitions.md
-        run: |
-          BAD_PATS="T3.{0,10}Tool|T4.{0,10}Deleg|T5.{0,10}Hier|T2.{0,10}Skill|T2.{0,10}Deleg|T3.{0,10}Hier|T4.{0,10}Hybrid|T1.{0,10}Tool|T0.{0,10}Skill|T1.{0,10}Prompt|T2.{0,10}Prompt|T3.{0,10}Skill|T4.{0,10}Tool|T5.{0,10}Deleg|T6.{0,10}Hier|T6.{0,10}Hybrid|T0.{0,10}Tool|T0.{0,10}Deleg|T5.{0,10}Skill|T6.{0,10}Deleg"
-          count=$(grep -En "$BAD_PATS" \
-            .claude/shared/metrics-definitions.md | wc -l)
-          echo "Bad tier label count: $count"
-          if [ "$count" -gt "0" ]; then
-            echo "::error::Found $count tier label mismatch(es) in metrics-definitions.md"
-            grep -En "$BAD_PATS" .claude/shared/metrics-definitions.md
-            exit 1
-          fi
-
-      - name: Setup uv
-        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78  # v7
+      - name: Cache podman container storage
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v5
         with:
-          enable-cache: true
+          path: ~/.local/share/containers/storage
+          key: podman-scylla-${{{{ runner.os }}}}-${{{{ hashFiles('pyproject.toml', 'uv.lock', '.pre-commit-config.yaml') }}}}
+          restore-keys: |
+            podman-scylla-${{{{ runner.os }}}}-
 
-      # Early gate: fail fast if uv.lock is out of date before running expensive tests.
-      - name: Validate uv.lock is up-to-date
-        run: uv lock --check
-
-      - name: Install locked project environment
-        run: uv sync --all-groups --all-extras --locked
-
-      - name: Check Python version consistency (pyproject.toml vs Dockerfile)
-        run: uv run python scripts/check_python_version_consistency.py
-
-      - name: Check doc/config consistency
-        run: uv run python scripts/check_doc_config_consistency.py --verbose
-
-      - name: Enforce tests/unit/ structure conventions
-        run: uv run python scripts/check_unit_test_structure.py
-
-      - name: Validate config schemas
-        run: uv run python scripts/validate_config_schemas.py config/defaults.yaml config/models/*.yaml tests/fixtures/config/tiers/*.yaml
-
-      - name: Check cyclomatic complexity
-        run: uv run hephaestus-check-complexity --threshold 10
-
-      - name: Enforce import-layer contracts (import-linter)
-        run: uv run lint-imports
-
-      - name: Run unit tests
-        run: |
-          uv run pytest tests/unit --override-ini="addopts=" -v --strict-markers \
-            --cov=src/scylla --cov-report=term-missing --cov-report=xml --cov-fail-under=75 \
-            --junitxml=junit-unit.xml
+      - name: Build CI image (podman)
+        run: podman build -f ci/Containerfile -t scylla-ci:local .
+      # Deprecated-symbol guards, uv.lock sync, consistency scripts,
+      # structure conventions, config schema validation, complexity gate,
+      # import-linter, and the pytest unit suite (75% coverage floor) all run
+      # inside the CI container.
+      - name: Unit tests (in container)
+        run: bash scripts/run_ci_local.sh unit
 
       - name: Upload coverage
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f  # v7.0.0
@@ -278,95 +183,28 @@ jobs:
             coverage.xml
             junit-unit.xml
           retention-days: 7
-
-  # ── 3. integration-tests ───────────────────────────────────────────────────
-  # Emits the required `integration-tests` context. Split out of the former
-  # test.yml matrix so the emitted name is `integration-tests`, not
-  # `test (integration, tests/integration)`.
   integration-tests:
     name: integration-tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v6
 
-      - name: Enforce no new deprecated BaseExecutionInfo usage
-        run: |
-          count=$(grep -rn "BaseExecutionInfo" . \
-            --include="*.py" \
-            --exclude-dir=".venv" \
-            | grep -v "src/scylla/core/results.py" \
-            | grep -v "src/scylla/core/__init__.py" \
-            | grep -v "# deprecated" \
-            | grep -v "(deprecated)" \
-            | grep -v "test_results.py" \
-            | wc -l)
-          echo "BaseExecutionInfo usage count (excluding definition, re-export, and tests): $count"
-          if [ "$count" -gt "0" ]; then
-            echo "::error::Found $count usages of deprecated BaseExecutionInfo — remove before merging"
-            grep -rn "BaseExecutionInfo" . --include="*.py" --exclude-dir=".venv" \
-              | grep -v "src/scylla/core/results.py" \
-              | grep -v "src/scylla/core/__init__.py" \
-              | grep -v "# deprecated" \
-              | grep -v "(deprecated)" \
-              | grep -v "test_results.py"
-            exit 1
-          fi
-
-      - name: Enforce no new deprecated BaseRunMetrics usage
-        run: |
-          count=$(grep -rn "BaseRunMetrics" . \
-            --include="*.py" \
-            --exclude-dir=".venv" \
-            | grep -v "src/scylla/core/results.py" \
-            | grep -v "# deprecated" \
-            | grep -v "(deprecated)" \
-            | grep -v "test_results.py" \
-            | wc -l)
-          echo "BaseRunMetrics usage count (excluding definition and tests): $count"
-          if [ "$count" -gt "0" ]; then
-            echo "::error::Found $count usages of deprecated BaseRunMetrics — remove before merging"
-            grep -rn "BaseRunMetrics" . --include="*.py" --exclude-dir=".venv" \
-              | grep -v "src/scylla/core/results.py" \
-              | grep -v "# deprecated" \
-              | grep -v "(deprecated)" \
-              | grep -v "test_results.py"
-            exit 1
-          fi
-
-      - name: Install nats-server
-        run: |
-          NATS_VERSION="v2.10.24"
-          NATS_SHA256="ee6500f364e3a741b496ae0296c04f2a9d53bbaabac457104ac74596b4a59d85"
-          curl -fsSL "https://github.com/nats-io/nats-server/releases/download/${NATS_VERSION}/nats-server-${NATS_VERSION}-linux-amd64.tar.gz" -o nats-server.tar.gz
-          echo "${NATS_SHA256}  nats-server.tar.gz" | sha256sum --check
-          tar xz -f nats-server.tar.gz
-          sudo mv nats-server-${NATS_VERSION}-linux-amd64/nats-server /usr/local/bin/
-          rm nats-server.tar.gz
-          nats-server --version
-
-      - name: Setup uv
-        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78  # v7
+      - name: Cache podman container storage
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v5
         with:
-          enable-cache: true
+          path: ~/.local/share/containers/storage
+          key: podman-scylla-${{{{ runner.os }}}}-${{{{ hashFiles('pyproject.toml', 'uv.lock', '.pre-commit-config.yaml') }}}}
+          restore-keys: |
+            podman-scylla-${{{{ runner.os }}}}-
 
-      - name: Validate uv.lock is up-to-date
-        run: uv lock --check
-
-      - name: Install locked project environment
-        run: uv sync --all-groups --all-extras --locked
-
-      - name: Check Python version consistency (pyproject.toml vs Dockerfile)
-        run: uv run python scripts/check_python_version_consistency.py
-
-      - name: Run integration tests
-        run: |
-          # Integration tests: 5% floor prevents regression without blocking new work
-          # --reruns 2: retry flaky integration tests (network/API calls) up to 2 times
-          uv run pytest tests/integration -v \
-            --cov=src/scylla --cov-report=term-missing --cov-report=xml --cov-fail-under=5 \
-            --reruns 2 --reruns-delay 5 \
-            --junitxml=junit-integration.xml
+      - name: Build CI image (podman)
+        run: podman build -f ci/Containerfile -t scylla-ci:local .
+      # nats-server v2.10.24 is baked into the CI image (pinned,
+      # sha256-checked in ci/Containerfile) — the integration fixtures spawn it
+      # from PATH exactly as the native job did after its curl install step.
+      - name: Integration tests (in container)
+        run: bash scripts/run_ci_local.sh integration
 
       - name: Upload test artifacts on failure
         if: failure()
@@ -377,29 +215,26 @@ jobs:
             coverage.xml
             junit-integration.xml
           retention-days: 7
-
-  # ── 4. security/dependency-scan ────────────────────────────────────────────
-  # Emits the required `security/dependency-scan` context. Body inlined from the
-  # former security.yml `pip-audit` job (renamed from "Dependency vulnerability
-  # scan"). The weekly scheduled scan stays in security.yml (schedule-only).
   security-dependency-scan:
     name: security/dependency-scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v6
 
-      - name: Setup uv
-        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78  # v7
+      - name: Cache podman container storage
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v5
         with:
-          enable-cache: true
+          path: ~/.local/share/containers/storage
+          key: podman-scylla-${{{{ runner.os }}}}-${{{{ hashFiles('pyproject.toml', 'uv.lock', '.pre-commit-config.yaml') }}}}
+          restore-keys: |
+            podman-scylla-${{{{ runner.os }}}}-
 
-      - name: Install locked project environment
-        run: uv sync --all-groups --all-extras --locked
-
-      - name: Run pip-audit
+      - name: Build CI image (podman)
+        run: podman build -f ci/Containerfile -t scylla-ci:local .
+      - name: Run pip-audit (in container)
         id: pip-audit
-        run: uv run pip-audit --format json | uv run python scripts/filter_audit.py
+        run: bash scripts/run_ci_local.sh security
 
       - name: Post pip-audit summary
         if: always()
@@ -415,14 +250,9 @@ jobs:
               echo "Vulnerabilities detected — see job logs for details."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
-
-  # ── 5. security/secrets-scan ───────────────────────────────────────────────
-  # Emits the required `security/secrets-scan` context. Body inlined from the
-  # former security.yml `secrets-scan` job (renamed from "Secrets scan
-  # (gitleaks)").
   security-secrets-scan:
     name: security/secrets-scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       # Full history checkout so gitleaks can scan all commits, not just HEAD.
@@ -430,16 +260,21 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install gitleaks
-        run: |
-          GITLEAKS_VERSION="8.30.1"
-          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
-            | tar xz -C /usr/local/bin gitleaks
+      - name: Cache podman container storage
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v5
+        with:
+          path: ~/.local/share/containers/storage
+          key: podman-scylla-${{{{ runner.os }}}}-${{{{ hashFiles('pyproject.toml', 'uv.lock', '.pre-commit-config.yaml') }}}}
+          restore-keys: |
+            podman-scylla-${{{{ runner.os }}}}-
 
-      - name: Run gitleaks
-        run: gitleaks detect --source . --config .gitleaks.toml --verbose
-
-  # ── 6. build ───────────────────────────────────────────────────────────────
+      - name: Build CI image (podman)
+        run: podman build -f ci/Containerfile -t scylla-ci:local .
+      # Gitleaks 8.30.1 is pinned in ci/Containerfile (same version the
+      # native job downloaded; scripts/check_ci_version_sync.py asserts the
+      # config files agree). Scanning is strict (default --exit-code 1).
+      - name: Run Gitleaks (in container)
+        run: bash scripts/run_ci_local.sh secrets
   build:
     name: build
     runs-on: ubuntu-24.04
@@ -573,67 +408,42 @@ jobs:
     name: schema-validation
     runs-on: ubuntu-24.04
     timeout-minutes: 10
-
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v6
 
-      - name: Setup uv
-        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78  # v7
+      - name: Cache podman container storage
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v5
         with:
-          enable-cache: true
+          path: ~/.local/share/containers/storage
+          key: podman-scylla-${{{{ runner.os }}}}-${{{{ hashFiles('pyproject.toml', 'uv.lock', '.pre-commit-config.yaml') }}}}
+          restore-keys: |
+            podman-scylla-${{{{ runner.os }}}}-
 
-      - name: Install locked project environment
-        run: uv sync --all-groups --all-extras --locked
-
-      - name: Validate workflow YAML schemas
-        run: |
-          find .github/workflows -name "*.yml" | sort | \
-            xargs uv run check-jsonschema \
-              --schemafile https://json.schemastore.org/github-workflow
-
-      - name: Validate JSON schemas in schemas/
-        run: |
-          # Ensure every schema file in schemas/ is valid JSON
-          find schemas/ -name "*.json" 2>/dev/null | sort | while read -r f; do
-            echo "Checking $f ..."
-            python3 -c "import json, sys; json.load(open('$f'))" || exit 1
-          done
-
-  # ── 8. deps/version-sync ───────────────────────────────────────────────────
+      - name: Build CI image (podman)
+        run: podman build -f ci/Containerfile -t scylla-ci:local .
+      - name: Validate schemas (in container)
+        run: bash scripts/run_ci_local.sh schema
   deps-version-sync:
     name: deps/version-sync
     runs-on: ubuntu-24.04
     timeout-minutes: 10
-
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v6
 
-      - name: Setup uv
-        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78  # v7
+      - name: Cache podman container storage
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v5
         with:
-          enable-cache: true
+          path: ~/.local/share/containers/storage
+          key: podman-scylla-${{{{ runner.os }}}}-${{{{ hashFiles('pyproject.toml', 'uv.lock', '.pre-commit-config.yaml') }}}}
+          restore-keys: |
+            podman-scylla-${{{{ runner.os }}}}-
 
-      - name: Install locked project environment
-        run: uv sync --all-groups --all-extras --locked
-
-      # Under uv, pyproject.toml is the single source of truth for the package
-      # version (pixi.toml is gone — ADR-017). This checker asserts that every
-      # remaining in-repo version declaration (src/scylla/__init__.py, skill
-      # templates) agrees with [project].version.
-      - name: Check package version single-source-of-truth
-        run: uv run python scripts/check_package_version_consistency.py --scan-skills
-
-      # Assert CI-tooling versions (setup-uv SHA, gitleaks) do not drift across
-      # workflow/action/pre-commit config files.
-      - name: Check CI tooling version sync
-        run: uv run python scripts/check_ci_version_sync.py --verbose
-
-      # Fail if uv.lock is out of sync with pyproject.toml — run 'uv lock'
-      # locally and commit the result.
-      - name: Validate uv.lock is up-to-date
-        run: uv lock --check
-
-  # ── 9. markdownlint ────────────────────────────────────────────────────────
+      - name: Build CI image (podman)
+        run: podman build -f ci/Containerfile -t scylla-ci:local .
+      # Package version single-source-of-truth, CI-tooling version sync,
+      # and uv.lock sync — all inside the CI container.
+      - name: Check version sync (in container)
+        run: bash scripts/run_ci_local.sh deps
   markdownlint:
     name: markdownlint
     runs-on: ubuntu-24.04
@@ -662,16 +472,20 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
-      - name: Setup uv
-        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78  # v7
+      - name: Cache podman container storage
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v5
         with:
-          enable-cache: true
-      - name: Check uv.lock is in sync with pyproject.toml
-        run: uv lock --check
-      - name: Install locked environment
-        run: uv sync --all-groups --all-extras --locked
+          path: ~/.local/share/containers/storage
+          key: podman-scylla-${{{{ runner.os }}}}-${{{{ hashFiles('pyproject.toml', 'uv.lock', '.pre-commit-config.yaml') }}}}
+          restore-keys: |
+            podman-scylla-${{{{ runner.os }}}}-
 
-  # ── 11. justfile-check ─────────────────────────────────────────────────────
+      - name: Build CI image (podman)
+        run: podman build -f ci/Containerfile -t scylla-ci:local .
+      - name: Check uv.lock is in sync (in container)
+        run: |
+          podman run --rm --userns=keep-id -v "$PWD:/workspace:Z" -w /workspace scylla-ci:local \
+            sh -c 'uv lock --check && uv sync --all-groups --all-extras --locked'
   justfile-check:
     name: justfile-check
     runs-on: ubuntu-24.04
