@@ -122,9 +122,9 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v5
         with:
           path: ~/.local/share/containers/storage
-          key: podman-scylla-${{{{ runner.os }}}}-${{{{ hashFiles('pyproject.toml', 'uv.lock', '.pre-commit-config.yaml') }}}}
+          key: podman-scylla-${{ runner.os }}-${{ hashFiles('pyproject.toml', 'uv.lock', '.pre-commit-config.yaml') }}
           restore-keys: |
-            podman-scylla-${{{{ runner.os }}}}-
+            podman-scylla-${{ runner.os }}-
 
       - name: Build CI image (podman)
         run: podman build -f ci/Containerfile -t scylla-ci:local .
@@ -153,9 +153,9 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v5
         with:
           path: ~/.local/share/containers/storage
-          key: podman-scylla-${{{{ runner.os }}}}-${{{{ hashFiles('pyproject.toml', 'uv.lock', '.pre-commit-config.yaml') }}}}
+          key: podman-scylla-${{ runner.os }}-${{ hashFiles('pyproject.toml', 'uv.lock', '.pre-commit-config.yaml') }}
           restore-keys: |
-            podman-scylla-${{{{ runner.os }}}}-
+            podman-scylla-${{ runner.os }}-
 
       - name: Build CI image (podman)
         run: podman build -f ci/Containerfile -t scylla-ci:local .
@@ -194,9 +194,9 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v5
         with:
           path: ~/.local/share/containers/storage
-          key: podman-scylla-${{{{ runner.os }}}}-${{{{ hashFiles('pyproject.toml', 'uv.lock', '.pre-commit-config.yaml') }}}}
+          key: podman-scylla-${{ runner.os }}-${{ hashFiles('pyproject.toml', 'uv.lock', '.pre-commit-config.yaml') }}
           restore-keys: |
-            podman-scylla-${{{{ runner.os }}}}-
+            podman-scylla-${{ runner.os }}-
 
       - name: Build CI image (podman)
         run: podman build -f ci/Containerfile -t scylla-ci:local .
@@ -226,9 +226,9 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v5
         with:
           path: ~/.local/share/containers/storage
-          key: podman-scylla-${{{{ runner.os }}}}-${{{{ hashFiles('pyproject.toml', 'uv.lock', '.pre-commit-config.yaml') }}}}
+          key: podman-scylla-${{ runner.os }}-${{ hashFiles('pyproject.toml', 'uv.lock', '.pre-commit-config.yaml') }}
           restore-keys: |
-            podman-scylla-${{{{ runner.os }}}}-
+            podman-scylla-${{ runner.os }}-
 
       - name: Build CI image (podman)
         run: podman build -f ci/Containerfile -t scylla-ci:local .
@@ -264,9 +264,9 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v5
         with:
           path: ~/.local/share/containers/storage
-          key: podman-scylla-${{{{ runner.os }}}}-${{{{ hashFiles('pyproject.toml', 'uv.lock', '.pre-commit-config.yaml') }}}}
+          key: podman-scylla-${{ runner.os }}-${{ hashFiles('pyproject.toml', 'uv.lock', '.pre-commit-config.yaml') }}
           restore-keys: |
-            podman-scylla-${{{{ runner.os }}}}-
+            podman-scylla-${{ runner.os }}-
 
       - name: Build CI image (podman)
         run: podman build -f ci/Containerfile -t scylla-ci:local .
@@ -415,9 +415,9 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v5
         with:
           path: ~/.local/share/containers/storage
-          key: podman-scylla-${{{{ runner.os }}}}-${{{{ hashFiles('pyproject.toml', 'uv.lock', '.pre-commit-config.yaml') }}}}
+          key: podman-scylla-${{ runner.os }}-${{ hashFiles('pyproject.toml', 'uv.lock', '.pre-commit-config.yaml') }}
           restore-keys: |
-            podman-scylla-${{{{ runner.os }}}}-
+            podman-scylla-${{ runner.os }}-
 
       - name: Build CI image (podman)
         run: podman build -f ci/Containerfile -t scylla-ci:local .
@@ -434,9 +434,9 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v5
         with:
           path: ~/.local/share/containers/storage
-          key: podman-scylla-${{{{ runner.os }}}}-${{{{ hashFiles('pyproject.toml', 'uv.lock', '.pre-commit-config.yaml') }}}}
+          key: podman-scylla-${{ runner.os }}-${{ hashFiles('pyproject.toml', 'uv.lock', '.pre-commit-config.yaml') }}
           restore-keys: |
-            podman-scylla-${{{{ runner.os }}}}-
+            podman-scylla-${{ runner.os }}-
 
       - name: Build CI image (podman)
         run: podman build -f ci/Containerfile -t scylla-ci:local .
@@ -476,9 +476,9 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v5
         with:
           path: ~/.local/share/containers/storage
-          key: podman-scylla-${{{{ runner.os }}}}-${{{{ hashFiles('pyproject.toml', 'uv.lock', '.pre-commit-config.yaml') }}}}
+          key: podman-scylla-${{ runner.os }}-${{ hashFiles('pyproject.toml', 'uv.lock', '.pre-commit-config.yaml') }}
           restore-keys: |
-            podman-scylla-${{{{ runner.os }}}}-
+            podman-scylla-${{ runner.os }}-
 
       - name: Build CI image (podman)
         run: podman build -f ci/Containerfile -t scylla-ci:local .
