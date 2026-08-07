@@ -29,7 +29,7 @@ FROM ubuntu:24.04@sha256:c4a8d5503dfb2a3eb8ab5f807da5bc69a85730fb49b5cfca2330194
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
-    && curl -fsSL https://github.com/astral-sh/uv/releases/download/0.11.21/uv-x86_64-unknown-linux-gnu.tar.gz -o /tmp/uv.tar.gz \
+    && curl -fsSL --retry 5 --retry-all-errors https://github.com/astral-sh/uv/releases/download/0.11.21/uv-x86_64-unknown-linux-gnu.tar.gz -o /tmp/uv.tar.gz \
     && echo "8c88519b0ef0af9801fcdee419bbb12116bd9e6b18e162ae093c932d8b264050  /tmp/uv.tar.gz" | sha256sum --check \
     && tar xzf /tmp/uv.tar.gz -C /usr/local/bin --strip-components=1 \
     && rm /tmp/uv.tar.gz
@@ -136,11 +136,11 @@ COPY --from=builder /opt/scylla-venv /opt/scylla-venv
 #   - nats-server v2.10.24  (integration-tests live broker)
 #   - check-jsonschema     (workflow schema gate; installed as a uv tool into
 #                           /opt/uv-tools with a /usr/local/bin shim)
-RUN curl -fsSL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz -o /tmp/gitleaks.tar.gz \
+RUN curl -fsSL --retry 5 --retry-all-errors https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz -o /tmp/gitleaks.tar.gz \
     && echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  /tmp/gitleaks.tar.gz" | sha256sum --check \
     && tar xzf /tmp/gitleaks.tar.gz -C /usr/local/bin gitleaks \
     && rm /tmp/gitleaks.tar.gz \
-    && curl -fsSL https://github.com/nats-io/nats-server/releases/download/v2.10.24/nats-server-v2.10.24-linux-amd64.tar.gz -o /tmp/nats.tar.gz \
+    && curl -fsSL --retry 5 --retry-all-errors https://github.com/nats-io/nats-server/releases/download/v2.10.24/nats-server-v2.10.24-linux-amd64.tar.gz -o /tmp/nats.tar.gz \
     && echo "ee6500f364e3a741b496ae0296c04f2a9d53bbaabac457104ac74596b4a59d85  /tmp/nats.tar.gz" | sha256sum --check \
     && tar xzf /tmp/nats.tar.gz -C /usr/local/bin --strip-components=1 nats-server-v2.10.24-linux-amd64/nats-server \
     && rm /tmp/nats.tar.gz \

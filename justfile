@@ -54,7 +54,7 @@ ci-all:
     ./scripts/run_ci_local.sh all
 
 # Run the lint job subset in container
-ci-lint:
+ci-lint-subset:
     ./scripts/run_ci_local.sh lint
 
 # Run the unit-tests job subset in container
