@@ -117,6 +117,7 @@ CVE-2026-42504
 GHSA-4w2j-m93h-cj5j
 
 # GHSA-5p4m-2wfm-xmqj / CVE-2026-59870: JS-YAML quadratic CPU consumption in !!omap
+GHSA-5p4m-2wfm-xmqj
 # resolution — js-yaml 4.1.1 in a node package.json baked into the pre-commit node
 # tooling cache. Unfixable without bumping the pinned pre-commit hook rev; only
 # processes trusted repo YAML in CI.
