@@ -130,17 +130,15 @@ run_in_container() {
 
 run_pre_commit() {
     log_step "Pre-commit (linting, type checking, security hooks)"
-    run_in_container \
-        uv run \
-        pre-commit run --all-files --show-diff-on-failure
+    run_in_container sh -c 'git config --global --add safe.directory /workspace && uv run pre-commit run --all-files --show-diff-on-failure'
 }
 
 run_lint() {
     log_step "lint: pre-commit + ruff C901 + mypy + lint-imports"
     run_pre_commit
-    run_in_container uv run ruff check --select C901 src/scylla/ scripts/
-    run_in_container uv run mypy scripts/ src/scylla/ tests/
-    run_in_container uv run lint-imports
+    run_in_container sh -c 'export RUFF_CACHE_DIR=/tmp/ruff_cache; uv run ruff check --select C901 src/scylla/ scripts/'
+    run_in_container sh -c 'export MYPY_CACHE_DIR=/tmp/mypy_cache; uv run mypy scripts/ src/scylla/ tests/'
+    run_in_container sh -c 'export RUFF_CACHE_DIR=/tmp/ruff_cache MYPY_CACHE_DIR=/tmp/mypy_cache; uv run lint-imports'
 }
 
 run_guards() {
@@ -204,7 +202,7 @@ run_unit() {
     run_in_container uv run python scripts/check_unit_test_structure.py
     run_in_container uv run python scripts/validate_config_schemas.py config/defaults.yaml config/models/*.yaml tests/fixtures/config/tiers/*.yaml
     run_in_container uv run hephaestus-check-complexity --threshold 10
-    run_in_container uv run lint-imports
+    run_in_container sh -c 'export RUFF_CACHE_DIR=/tmp/ruff_cache MYPY_CACHE_DIR=/tmp/mypy_cache; uv run lint-imports'
     run_in_container \
         uv run pytest tests/unit --override-ini="addopts=" -v --strict-markers \
             --cov=src/scylla --cov-report=term-missing --cov-report=xml --cov-fail-under=75 \
