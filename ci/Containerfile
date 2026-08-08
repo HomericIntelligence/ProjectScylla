@@ -123,6 +123,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     bats \
     jq \
     make \
+    libatomic1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the uv binaries from the release-tarball stage, and the pre-installed

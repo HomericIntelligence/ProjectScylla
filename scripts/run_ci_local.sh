@@ -113,7 +113,7 @@ run_in_container() {
 
     # Podman-specific flags for rootless execution
     if [ "${CONTAINER_ENGINE}" = "podman" ]; then
-        engine_flags+=(--userns=keep-id)
+        engine_flags+=(--userns=keep-id:uid=1000,gid=1000)
     fi
 
     "${CONTAINER_ENGINE}" run --rm \
