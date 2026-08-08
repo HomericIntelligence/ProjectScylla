@@ -107,3 +107,18 @@ CVE-2026-39822
 CVE-2026-39836
 CVE-2026-42499
 CVE-2026-42504
+
+# GHSA-4w2j-m93h-cj5j: quinn-proto remote memory exhaustion (unbounded out-of-order
+# stream reassembly) — compiled into the pinned uv/uvx binaries (0.11.21, ships
+# quinn-proto 0.11.14; fix lands in 0.11.15, needs an uv release bump coordinated
+# with the checksum-pinned Containerfile stage). uv/uvx are CI tooling only; the
+# vulnerable path requires untrusted QUIC peer connections that CI never makes.
+# Expires: 2026-10-14 | Reviewer: mvillmow | Category: ci-image-tooling (uv quinn-proto)
+GHSA-4w2j-m93h-cj5j
+
+# GHSA-5p4m-2wfm-xmqj / CVE-2026-59870: JS-YAML quadratic CPU consumption in !!omap
+# resolution — js-yaml 4.1.1 in a node package.json baked into the pre-commit node
+# tooling cache. Unfixable without bumping the pinned pre-commit hook rev; only
+# processes trusted repo YAML in CI.
+# Expires: 2026-10-14 | Reviewer: mvillmow | Category: ci-image-tooling (pre-commit node js-yaml)
+CVE-2026-59870
