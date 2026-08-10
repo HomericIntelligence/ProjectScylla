@@ -52,3 +52,74 @@ CVE-2026-42508
 CVE-2026-46595
 # CVE-2026-46597: ssh Denial of Service via crafted AES-GCM packet decoder inputs
 CVE-2026-46597
+
+# ============================================================================
+# Added 2026-08-08: markdownlint-cli2 v0.20.0 node env (pre-commit cache) +
+# vendored Go tool binaries + scylla-venv deps. Same categories as above.
+# Expires: 2026-10-14 | Reviewer: mvillmow | Category: ci-image-tooling
+# ============================================================================
+
+# brace-expansion DoS (two CVEs) — markdownlint-cli2 v0.20.0 node env baked in
+# the pre-commit cache (repo7kd00j4w/node_env-default). v0.20.0 is the newest
+# pinned rev; fixed versions (5.0.8+) require a hook rev bump that changes lint
+# behavior. Hook only lints trusted repo Markdown in CI.
+# Expires: 2026-10-14 | Reviewer: mvillmow | Category: ci-image-tooling (markdownlint brace-expansion)
+CVE-2026-14257
+CVE-2026-69152
+
+# ip-address parsing inconsistency — markdownlint-cli2 node env transitive dep.
+# Expires: 2026-10-14 | Reviewer: mvillmow | Category: ci-image-tooling (markdownlint ip-address)
+CVE-2026-69192
+
+# js-yaml DoS via crafted YAML — markdownlint-cli2 node env transitive dep.
+# Expires: 2026-10-14 | Reviewer: mvillmow | Category: ci-image-tooling (markdownlint js-yaml)
+CVE-2026-59869
+CVE-2026-59870
+
+# golang.org/x/net + golang.org/x/text CVEs below: compiled into the vendored
+# Go binaries in the image (gitleaks, actionlint, trivy, syft, grype). Fixes
+# land upstream; no released binary version clears them. Tools scan trusted
+# repo content only; the vulnerable network/text paths are not reachable.
+# Expires: 2026-10-14 | Reviewer: mvillmow | Category: ci-image-tooling (Go tool binaries)
+CVE-2025-22869
+CVE-2026-56852
+
+# cryptography 49.0.0 in scylla-venv (METADATA scan of the project venv).
+# Fixes land in 50.0.0; bump blocked by pinned dependency constraints.
+# Expires: 2026-10-14 | Reviewer: mvillmow | Category: ci-image-tooling (venv cryptography)
+CVE-2026-69247
+
+# Remaining node-env CVEs from the pre-commit hook cache (formatter-* hooks +
+# markdownlint tree). Same category: dev-tooling cache, not runtime code.
+# Expires: 2026-10-14 | Reviewer: mvillmow | Category: ci-image-tooling (pre-commit node envs)
+CVE-2025-61726
+CVE-2025-61729
+CVE-2025-68121
+CVE-2026-25679
+CVE-2026-27145
+CVE-2026-32280
+CVE-2026-32281
+CVE-2026-32283
+CVE-2026-33811
+CVE-2026-33814
+CVE-2026-39820
+CVE-2026-39822
+CVE-2026-39836
+CVE-2026-42499
+CVE-2026-42504
+
+# GHSA-4w2j-m93h-cj5j: quinn-proto remote memory exhaustion (unbounded out-of-order
+# stream reassembly) — compiled into the pinned uv/uvx binaries (0.11.21, ships
+# quinn-proto 0.11.14; fix lands in 0.11.15, needs an uv release bump coordinated
+# with the checksum-pinned Containerfile stage). uv/uvx are CI tooling only; the
+# vulnerable path requires untrusted QUIC peer connections that CI never makes.
+# Expires: 2026-10-14 | Reviewer: mvillmow | Category: ci-image-tooling (uv quinn-proto)
+GHSA-4w2j-m93h-cj5j
+
+# GHSA-5p4m-2wfm-xmqj / CVE-2026-59870: JS-YAML quadratic CPU consumption in !!omap
+GHSA-5p4m-2wfm-xmqj
+# resolution — js-yaml 4.1.1 in a node package.json baked into the pre-commit node
+# tooling cache. Unfixable without bumping the pinned pre-commit hook rev; only
+# processes trusted repo YAML in CI.
+# Expires: 2026-10-14 | Reviewer: mvillmow | Category: ci-image-tooling (pre-commit node js-yaml)
+CVE-2026-59870
