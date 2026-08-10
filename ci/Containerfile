@@ -19,20 +19,27 @@
 #   podman run --rm -v .:/workspace:Z scylla-ci:local uv run pre-commit run --all-files
 
 # ============================================================================
-# Stage 0: uv binary source — pulled as a named stage so `COPY --from=uv`
-# resolves identically under both podman/buildah and docker. A bare
-# `COPY --from=ghcr.io/astral-sh/uv:<tag>@<digest>` (tag AND digest together)
-# is rejected by buildah with "no stage or image found with that name", so we
-# alias the digest-pinned image to a stage name here and COPY from the alias.
+# Stage 0: uv binary — installed from a pinned GitHub release so the checksum
+# is reproducible and the build resolves identically under podman/buildah and
+# docker without a registry dependency. (The ghcr.io astral-sh/uv image's tag
+# scheme tracks uv CLI versions but pulls can 403 on rootless hosts; the
+# release tarball avoids that entirely.)
 # ============================================================================
-FROM ghcr.io/astral-sh/uv:0.11.21@sha256:ff07b86af50d4d9391d9daf4ff89ce427bc544f9aae87057e69a1cc0aa369946 AS uv
+FROM ubuntu:24.04@sha256:c4a8d5503dfb2a3eb8ab5f807da5bc69a85730fb49b5cfca2330194ebcc41c7b AS uv
+
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -fsSL --retry 5 --retry-all-errors https://github.com/astral-sh/uv/releases/download/0.11.21/uv-x86_64-unknown-linux-gnu.tar.gz -o /tmp/uv.tar.gz \
+    && echo "8c88519b0ef0af9801fcdee419bbb12116bd9e6b18e162ae093c932d8b264050  /tmp/uv.tar.gz" | sha256sum --check \
+    && tar xzf /tmp/uv.tar.gz -C /usr/local/bin --strip-components=1 \
+    && rm /tmp/uv.tar.gz
 
 # ============================================================================
 # Stage 1: Builder — install uv and the locked project environment
 # ============================================================================
 # NOTE: docker/Dockerfile pins a different SHA256 for the same python:3.12-slim tag.
 # Both intentionally kept separate; if you update either digest, update both files together.
-FROM python:3.12-slim@sha256:804ddf3251a60bbf9c92e73b7566c40428d54d0e79d3428194edf40da6521286 AS builder
+FROM python:3.13-slim@sha256:6771159cd4fa5d9bba1258caf0b82e6b73458c694d178ad97c5e925c2d0e1a91 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PIP_NO_CACHE_DIR=1 \
@@ -58,10 +65,9 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     bats \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv (pinned digest matching the setup-uv action used in CI workflows).
-# IMPORTANT: keep this pinned uv image in sync with astral-sh/setup-uv in
-# .github/workflows/*.yml when bumping.
-COPY --from=uv /uv /uvx /usr/local/bin/
+# Install uv (pinned 0.11.21 — keep in sync with astral-sh/setup-uv in
+# .github/workflows/*.yml when bumping).
+COPY --from=uv /usr/local/bin/uv /usr/local/bin/uvx /usr/local/bin/
 
 # Layer 1: Dependency files — cache layer invalidated only when deps change.
 # Copy in order of change frequency (least → most frequent). The editable
@@ -92,7 +98,7 @@ RUN git init . && \
 # ============================================================================
 # Stage 2: Runtime — minimal image without build tools
 # ============================================================================
-FROM python:3.12-slim@sha256:804ddf3251a60bbf9c92e73b7566c40428d54d0e79d3428194edf40da6521286
+FROM python:3.13-slim@sha256:6771159cd4fa5d9bba1258caf0b82e6b73458c694d178ad97c5e925c2d0e1a91
 
 LABEL org.opencontainers.image.title="scylla-ci"
 LABEL org.opencontainers.image.description="CI container for Scylla — testing, linting, security scans"
@@ -104,6 +110,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \
     UV_PROJECT_ENVIRONMENT=/opt/scylla-venv \
     UV_LINK_MODE=copy \
+    UV_TOOL_DIR=/opt/uv-tools \
+    UV_TOOL_BIN_DIR=/usr/local/bin \
     PATH="/opt/scylla-venv/bin:$PATH"
 
 # Runtime-only system packages (no build tools)
@@ -113,11 +121,32 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     curl \
     ca-certificates \
     bats \
+    jq \
+    make \
+    libatomic1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the uv binaries and the pre-installed project virtualenv from builder.
-COPY --from=uv /uv /uvx /usr/local/bin/
+# Copy the uv binaries from the release-tarball stage, and the pre-installed
+# project virtualenv from the builder stage.
+COPY --from=uv /usr/local/bin/uv /usr/local/bin/uvx /usr/local/bin/
 COPY --from=builder /opt/scylla-venv /opt/scylla-venv
+
+# Pinned security/test tools (keep in sync with .pre-commit-config.yaml and
+# the workflow pins — scripts/check_ci_version_sync.py asserts they agree):
+#   - gitleaks 8.30.1      (security-secrets-scan job)
+#   - nats-server v2.10.24  (integration-tests live broker)
+#   - check-jsonschema     (workflow schema gate; installed as a uv tool into
+#                           /opt/uv-tools with a /usr/local/bin shim)
+RUN curl -fsSL --retry 5 --retry-all-errors https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz -o /tmp/gitleaks.tar.gz \
+    && echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  /tmp/gitleaks.tar.gz" | sha256sum --check \
+    && tar xzf /tmp/gitleaks.tar.gz -C /usr/local/bin gitleaks \
+    && rm /tmp/gitleaks.tar.gz \
+    && curl -fsSL --retry 5 --retry-all-errors https://github.com/nats-io/nats-server/releases/download/v2.10.24/nats-server-v2.10.24-linux-amd64.tar.gz -o /tmp/nats.tar.gz \
+    && echo "ee6500f364e3a741b496ae0296c04f2a9d53bbaabac457104ac74596b4a59d85  /tmp/nats.tar.gz" | sha256sum --check \
+    && tar xzf /tmp/nats.tar.gz -C /usr/local/bin --strip-components=1 nats-server-v2.10.24-linux-amd64/nats-server \
+    && rm /tmp/nats.tar.gz \
+    && uv tool install check-jsonschema \
+    && chmod -R a+rX /opt/uv-tools
 
 # Copy pre-commit hook cache from builder (baked-in hook envs)
 COPY --from=builder /root/.cache/pre-commit /root/.cache/pre-commit
@@ -130,6 +159,10 @@ RUN groupadd -r ci && useradd -r -g ci -u 1000 -m -s /bin/bash ci
 # Copy pre-commit cache to ci user's home (pre-commit uses $HOME/.cache)
 RUN cp -r /root/.cache/pre-commit /home/ci/.cache/ 2>/dev/null || true && \
     chown -R ci:ci /home/ci/.cache
+
+# The baked venv was built with --no-install-project; at runtime `uv run`
+# installs the project (editable) into it, so the ci user must own it.
+RUN chown -R ci:ci /opt/scylla-venv /opt/uv-tools
 
 # Working directory is the mounted repo root at runtime
 WORKDIR /workspace

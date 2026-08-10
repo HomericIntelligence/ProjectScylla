@@ -99,3 +99,6 @@ worktrees
 
 # Root-level log files (automation scripts, debugging)
 /*.log
+coverage.xml
+junit-unit.xml
+junit-integration.xml
