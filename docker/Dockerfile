@@ -110,7 +110,7 @@ LABEL org.opencontainers.image.vendor="Scylla"
 LABEL org.opencontainers.image.version="latest"
 
 # Copy Python packages from builder stage to global location
-COPY --from=builder /root/.local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /root/.local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
 COPY --from=builder /root/.local/bin /usr/local/bin
 
 # Set environment variables
