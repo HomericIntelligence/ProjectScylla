@@ -11,10 +11,10 @@
 # Stage 1: Builder - Install Python packages with build dependencies
 # ============================================================================
 # Pinned to SHA256 digest for reproducibility - prevents drift from upstream updates
-# Python 3.12 aligns with pyproject.toml classifiers (3.10-3.13); requires-python = ">=3.10"
+# Python 3.13 aligns with pyproject.toml classifiers (3.13); requires-python = ">=3.13,<3.14"
 # NOTE: ci/Containerfile pins a different SHA256 for the same python:3.12-slim tag.
 # Both intentionally kept separate; if you update either digest, update both files together.
-FROM python:3.12-slim@sha256:f3fa41d74a768c2fce8016b98c191ae8c1bacd8f1152870a3f9f87d350920b7c AS builder
+FROM python:3.13-slim@sha256:6771159cd4fa5d9bba1258caf0b82e6b73458c694d178ad97c5e925c2d0e1a91 AS builder
 
 # Set build environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -100,8 +100,8 @@ FROM node:20-slim@sha256:1e85773c98c31d4fe5b545e4cb17379e617b348832fb3738b22a08f
 # Stage 2: Runtime - Minimal production image
 # ============================================================================
 # Pinned to SHA256 digest for reproducibility - prevents drift from upstream updates
-# Python 3.12 aligns with pyproject.toml classifiers (3.10-3.13); requires-python = ">=3.10"
-FROM python:3.12-slim@sha256:f3fa41d74a768c2fce8016b98c191ae8c1bacd8f1152870a3f9f87d350920b7c
+# Python 3.13 aligns with pyproject.toml classifiers (3.13); requires-python = ">=3.13,<3.14"
+FROM python:3.13-slim@sha256:6771159cd4fa5d9bba1258caf0b82e6b73458c694d178ad97c5e925c2d0e1a91
 
 # Set labels for image metadata
 LABEL org.opencontainers.image.title="scylla-runner"
@@ -148,6 +148,8 @@ RUN ln -sf /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
 #   CVE-2025-64756 (glob command injection)
 #   CVE-2026-26996/27903/27904 (minimatch DoS)
 #   CVE-2026-23745/23950/24842/26960/29786/31802 (tar path traversal/overwrite)
+#   CVE-2026-48815 (sigstore certificate verification bypass — npm bundled copy
+#   only; sigstore is pinned to 4.x because 5.x requires Node >= 22)
 #
 # MAINTENANCE: These npm patch versions are pinned manually because Dependabot
 # does not scan Dockerfile RUN lines. Update cadence and verification steps are
@@ -159,13 +161,16 @@ RUN npm install -g @anthropic-ai/claude-code@2.1.91 \
     && cd /usr/local/lib/node_modules/@anthropic-ai/claude-code \
     && npm install cross-spawn@7.0.6 glob@11.1.0 minimatch@10.2.5 tar@7.5.13 --save \
     # Patch npm's own bundled copies — npm install inside npm's tree is unreliable,
-    # so we install fixed versions globally then copy them over the vulnerable copies
-    && npm install -g tar@7.5.13 cross-spawn@7.0.6 glob@11.1.0 minimatch@10.2.5 \
-    && for pkg in tar cross-spawn glob minimatch; do \
+    # so we install fixed versions globally then copy them over the vulnerable copies.
+    # sigstore is npm-bundled only (not a claude-code dep), hence absent from the
+    # --save line above; the global install nests its own @sigstore/* deps, which
+    # the copy carries along so module resolution stays self-contained.
+    && npm install -g tar@7.5.13 cross-spawn@7.0.6 glob@11.1.0 minimatch@10.2.5 sigstore@4.1.1 \
+    && for pkg in tar cross-spawn glob minimatch sigstore; do \
          rm -rf /usr/local/lib/node_modules/npm/node_modules/$pkg \
          && cp -r /usr/local/lib/node_modules/$pkg /usr/local/lib/node_modules/npm/node_modules/$pkg; \
        done \
-    && npm uninstall -g tar cross-spawn glob minimatch \
+    && npm uninstall -g tar cross-spawn glob minimatch sigstore \
     # Purge npm cache — contains auth tokens from registry handshake
     && npm cache clean --force \
     && rm -rf /root/.npm /home/scylla/.npm /tmp/npm-*

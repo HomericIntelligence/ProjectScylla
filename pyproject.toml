@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "AI agent testing and optimization framework"
 readme = "README.md"
 license = {text = "BSD 3-Clause"}
-requires-python = ">=3.10"
+requires-python = ">=3.13,<3.14"
 authors = [
     { name = "Micah Villmow <research@villmow.us>" },
 ]
@@ -21,6 +21,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 keywords = ["ai", "agents", "benchmarking", "evaluation", "testing"]
@@ -41,7 +42,7 @@ dev = [
     "pytest-asyncio>=1.4.0,<2",
     "pytest-cov>=7.1.0,<8",
     "pre-commit>=4.6.0,<5",
-    "ruff>=0.15.20,<1",
+    "ruff>=0.15.22,<1",
     "defusedxml>=0.7.1,<1",
 ]
 nats = [
@@ -57,7 +58,7 @@ analysis = [
     "pandas>=2.3.3,<3",
     "seaborn>=0.13.2,<1",
     "scipy>=1.15.3,<2",
-    "altair>=6.1.0,<7",
+    "altair>=6.2.2,<7",
     "vl-convert-python>=1.9.0.post1,<2",
     "krippendorff>=0.8.2,<1",
     "statsmodels>=0.14,<1",
@@ -85,7 +86,7 @@ dev = [
     "pytest-rerunfailures>=14.0,<15",
     "pytest-watch>=4.2,<5",
     "pre-commit>=4.6.0,<5",
-    "ruff>=0.15.20,<1",
+    "ruff>=0.15.22,<1",
     "mypy>=1.8.0,<2",
     "yamllint>=1.35.0,<2",
     "defusedxml>=0.7.1,<1",
@@ -93,7 +94,7 @@ dev = [
     "bandit[toml]>=1.7.5,<2",
     "import-linter>=2.0,<3",
     "check-jsonschema>=0.29,<1",
-    "build>=1.2,<2",
+    "build>=1.5.0,<2",
     "twine>=5.0,<7",
     "bump2version>=1.0.1,<2",
     "types-pyyaml>=6.0.12.20250915,<7",
