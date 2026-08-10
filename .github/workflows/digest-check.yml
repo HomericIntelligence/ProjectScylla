@@ -23,7 +23,7 @@ jobs:
       - name: Get current pinned digest from Containerfile
         id: pinned
         run: |
-          PINNED_DIGEST=$(grep -oP 'FROM python:3.12-slim@sha256:\K[a-f0-9]{64}' ci/Containerfile | head -1)
+          PINNED_DIGEST=$(grep -oP 'FROM python:3.13-slim@sha256:\K[a-f0-9]{64}' ci/Containerfile | head -1)
           echo "digest=${PINNED_DIGEST}" >> "$GITHUB_OUTPUT"
           echo "Pinned digest: ${PINNED_DIGEST}"
 
