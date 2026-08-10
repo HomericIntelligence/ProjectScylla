@@ -246,7 +246,8 @@ class TestJudgeContainerManagerRunJudge:
             timed_out=False,
         )
 
-        manager = JudgeContainerManager()
+        # Use a mock executor so the test is hermetic (no docker daemon needed).
+        manager = JudgeContainerManager(executor=MagicMock())
 
         workspace = tmp_path / "workspace"
         workspace.mkdir()
@@ -274,7 +275,8 @@ class TestJudgeContainerManagerRunJudge:
             timed_out=True,
         )
 
-        manager = JudgeContainerManager()
+        # Use a mock executor so the test is hermetic (no docker daemon needed).
+        manager = JudgeContainerManager(executor=MagicMock())
 
         workspace = tmp_path / "workspace"
         workspace.mkdir()
