@@ -110,7 +110,7 @@ LABEL org.opencontainers.image.vendor="Scylla"
 LABEL org.opencontainers.image.version="latest"
 
 # Copy Python packages from builder stage to global location
-COPY --from=builder /root/.local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /root/.local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
 COPY --from=builder /root/.local/bin /usr/local/bin
 
 # Set environment variables
@@ -148,6 +148,9 @@ RUN ln -sf /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
 #   CVE-2025-64756 (glob command injection)
 #   CVE-2026-26996/27903/27904 (minimatch DoS)
 #   CVE-2026-23745/23950/24842/26960/29786/31802 (tar path traversal/overwrite)
+#   CVE-2026-55607 (claude-code git directory confusion; fixed 2.1.163)
+#   CVE-2026-59873/59874 (tar DoS; fixed 7.5.19)
+#   CVE-2026-13149 (brace-expansion ReDoS; fixed 2.1.2)
 #   CVE-2026-48815 (sigstore certificate verification bypass — npm bundled copy
 #   only; sigstore is pinned to 4.x because 5.x requires Node >= 22)
 #
@@ -156,21 +159,21 @@ RUN ln -sf /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
 # documented in docs/dev/dockerfile-npm-cve-patches.md. Run
 # `scripts/check_dockerfile_npm_patches.sh` to print currently-pinned versions
 # and check them against the npm registry for newer fix releases.
-RUN npm install -g @anthropic-ai/claude-code@2.1.91 \
+RUN npm install -g @anthropic-ai/claude-code@2.1.163 \
     # Patch claude-code's transitive deps
     && cd /usr/local/lib/node_modules/@anthropic-ai/claude-code \
-    && npm install cross-spawn@7.0.6 glob@11.1.0 minimatch@10.2.5 tar@7.5.13 --save \
+    && npm install cross-spawn@7.0.6 glob@11.1.0 minimatch@10.2.5 tar@7.5.19 brace-expansion@2.1.2 --save \
     # Patch npm's own bundled copies — npm install inside npm's tree is unreliable,
     # so we install fixed versions globally then copy them over the vulnerable copies.
     # sigstore is npm-bundled only (not a claude-code dep), hence absent from the
     # --save line above; the global install nests its own @sigstore/* deps, which
     # the copy carries along so module resolution stays self-contained.
-    && npm install -g tar@7.5.13 cross-spawn@7.0.6 glob@11.1.0 minimatch@10.2.5 sigstore@4.1.1 \
-    && for pkg in tar cross-spawn glob minimatch sigstore; do \
+    && npm install -g tar@7.5.19 cross-spawn@7.0.6 glob@11.1.0 minimatch@10.2.5 brace-expansion@2.1.2 sigstore@4.1.1 \
+    && for pkg in tar cross-spawn glob minimatch brace-expansion sigstore; do \
          rm -rf /usr/local/lib/node_modules/npm/node_modules/$pkg \
          && cp -r /usr/local/lib/node_modules/$pkg /usr/local/lib/node_modules/npm/node_modules/$pkg; \
        done \
-    && npm uninstall -g tar cross-spawn glob minimatch sigstore \
+    && npm uninstall -g tar cross-spawn glob minimatch brace-expansion sigstore \
     # Purge npm cache — contains auth tokens from registry handshake
     && npm cache clean --force \
     && rm -rf /root/.npm /home/scylla/.npm /tmp/npm-*
