@@ -1612,7 +1612,7 @@ dev = [
     { name = "bump2version", specifier = ">=1.0.1,<2" },
     { name = "check-jsonschema", specifier = ">=0.29,<1" },
     { name = "defusedxml", specifier = ">=0.7.1,<1" },
-    { name = "hatchling", specifier = ">=1.29.0,<2" },
+    { name = "hatchling", specifier = ">=1.31.0,<2" },
     { name = "import-linter", specifier = ">=2.0,<3" },
     { name = "mypy", specifier = ">=1.8.0,<2" },
     { name = "pip-audit", specifier = ">=2.10.1,<3" },
