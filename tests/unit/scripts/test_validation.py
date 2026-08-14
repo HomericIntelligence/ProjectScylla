@@ -119,7 +119,7 @@ class TestExtractMarkdownLinks:
         content = "See [this](https://example.com) and [that](local.md).\n"
         links = extract_markdown_links(content)
         targets = [link for link, _lineno in links]
-        assert "https://example.com" in targets
+        assert any(target == "https://example.com" for target in targets)
         assert "local.md" in targets
 
     def test_returns_line_numbers(self) -> None:
