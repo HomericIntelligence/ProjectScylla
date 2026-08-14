@@ -30,9 +30,12 @@ def _extract_layer2_run_snippet(dockerfile_content: str) -> str:
         The matched RUN block as a string, or an empty string if not found.
 
     """
-    # Match inline python3 -c form (backslash continuations)
+    # Match inline python3 -c form (backslash continuations).
+    # Linear-time rewrite: each repetition consumes either a plain character or
+    # a backslash-newline continuation pair, so no nested quantifier can cause
+    # exponential backtracking (CodeQL py/redos).
     inline_pattern = re.compile(
-        r"(RUN python3 -c .*?(?:\\\n.*?)*)\n(?!.*\\)",
+        r"(RUN python3 -c(?:[^\n\\]|\\\n)*)\n(?!.*\\)",
         re.DOTALL,
     )
     for match in inline_pattern.finditer(dockerfile_content):
