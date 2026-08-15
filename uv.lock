@@ -450,7 +450,7 @@ wheels = [
 
 [[package]]
 name = "homericintelligence-hephaestus"
-version = "0.10.1"
+version = "0.10.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jinja2" },
@@ -458,9 +458,9 @@ dependencies = [
     { name = "pyyaml" },
     { name = "tzdata", marker = "sys_platform == 'win32'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d7/62/dd9a0d3496cc3ae78b0051a50022f8bf40c42ca722c1aba9d079756c2d94/homericintelligence_hephaestus-0.10.1.tar.gz", hash = "sha256:9d8ac53451eed63adc91dc832018bf3e2568c392ae56dcce6cf06a6fde6d45f0", size = 788270, upload-time = "2026-08-05T19:56:42.339Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a9/ec/764cb23509fc4c6c4f0804db3529e6bb5ea44e9f6cdf1cfb45d3e1143f71/homericintelligence_hephaestus-0.10.0.tar.gz", hash = "sha256:5e005ea7b434e3e0516596668a0fe829364ae3c1266759066c30ff0388e32da3", size = 687717, upload-time = "2026-07-24T08:39:58.172Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0c/d6/4b29f3035bc0411dc6113f658fc20881ced8504d013993136d4182056403/homericintelligence_hephaestus-0.10.1-py3-none-any.whl", hash = "sha256:051384e1b82018c669fe73753091af72a71cb24c5a1f82e63d7a94cc7d2be207", size = 962119, upload-time = "2026-08-05T19:56:40.247Z" },
+    { url = "https://files.pythonhosted.org/packages/ac/a2/2c40d4e29b8992c52f902062486bc751d8fa519a614fd96aa0de8347f2e3/homericintelligence_hephaestus-0.10.0-py3-none-any.whl", hash = "sha256:8ee61fbebddab959a607cf3a894c210a21a16feea6ed1f93eb92fcf2a8b2e28b", size = 844876, upload-time = "2026-07-24T08:39:56.604Z" },
 ]
 
 [[package]]
@@ -1600,7 +1600,7 @@ requires-dist = [
     { name = "altair", marker = "extra == 'analysis'", specifier = ">=6.2.2,<7" },
     { name = "click", specifier = ">=8.4.2,<9" },
     { name = "defusedxml", marker = "extra == 'dev'", specifier = ">=0.7.1,<1" },
-    { name = "homericintelligence-hephaestus", specifier = ">=0.10.1,<1" },
+    { name = "homericintelligence-hephaestus", specifier = ">=0.9.9,<0.10.1" },
     { name = "httpx", specifier = ">=0.28.1,<1" },
     { name = "jsonschema", specifier = ">=4.26.0,<5" },
     { name = "krippendorff", marker = "extra == 'analysis'", specifier = ">=0.8.2,<1" },
