@@ -55,7 +55,7 @@ analysis = [
     # match the last-known-good pixi resolution. Revisit when mypy handles PEP
     # 695 stubs at older targets or requires-python is bumped.
     "numpy>=2.5.1,<2.6",
-    "pandas>=2.3.3,<3",
+    "pandas>=3.0.5,<4",
     "seaborn>=0.13.2,<1",
     "scipy>=1.15.3,<2",
     "altair>=6.2.2,<7",
@@ -83,7 +83,7 @@ dev = [
     "pytest-asyncio>=1.4.0,<2",
     "pytest-cov>=7.1.0,<8",
     "pytest-timeout>=2.0,<3",
-    "pytest-rerunfailures>=14.0,<15",
+    "pytest-rerunfailures>=16.4,<17",
     "pytest-watch>=4.2,<5",
     "pre-commit>=4.6.1,<5",
     "ruff>=0.16.1,<1",
@@ -95,7 +95,7 @@ dev = [
     "import-linter>=2.0,<3",
     "check-jsonschema>=0.29,<1",
     "build>=1.5.0,<2",
-    "twine>=6.2.0,<7",
+    "twine>=7.0.0,<8",
     "bump2version>=1.0.1,<2",
     "types-pyyaml>=6.0.12.20250915,<7",
     "types-jsonschema>=4.26.0.20260202,<5",
