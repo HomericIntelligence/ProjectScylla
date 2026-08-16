@@ -123,3 +123,26 @@ GHSA-5p4m-2wfm-xmqj
 # processes trusted repo YAML in CI.
 # Expires: 2026-10-14 | Reviewer: mvillmow | Category: ci-image-tooling (pre-commit node js-yaml)
 CVE-2026-59870
+
+# golang.org/x/net + encoding/asn1 CVEs below: compiled into the gitleaks binary
+# that pre-commit's golang hook environment builds for the gitleaks v8.30.1 hook.
+# v8.30.1 vendors Go stdlib 1.23.x/1.24.x-era x/net; fixes land in Go 1.26.6 /
+# 1.25.13 toolchains. There is no released gitleaks build to bump to that clears
+# them. gitleaks only secret-scans trusted repo content in CI; the vulnerable
+# code paths (idna, dnsmessage, asn1 Unmarshal recursion) are not reachable from
+# our usage.
+# Expires: 2026-10-14 | Reviewer: mvillmow | Category: ci-image-tooling (gitleaks x/net)
+CVE-2026-33818
+CVE-2026-39821
+CVE-2026-46600
+
+# golang.org/x/net dnsmessage/idna + net/http cluster: compiled into the gitleaks
+# binary (pre-commit golang hook env). Fixed in Go toolchain 1.26.6 / 1.25.13;
+# no released gitleaks build vendors a newer stdlib yet. Not reachable from our
+# secret-scan usage (no untrusted network input).
+# Expires: 2026-10-14 | Reviewer: mvillmow | Category: ci-image-tooling (gitleaks x/net)
+CVE-2026-56853
+CVE-2026-56858
+CVE-2026-56859
+CVE-2026-56860
+CVE-2026-56862
