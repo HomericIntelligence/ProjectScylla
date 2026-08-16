@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling>=1.29.0,<2"]
+requires = ["hatchling>=1.31.0,<2"]
 build-backend = "hatchling.build"
 
 [project]
@@ -101,7 +101,7 @@ dev = [
     "types-jsonschema>=4.26.0.20260202,<5",
     # Build backend importable in-env so tests/unit/config/test_wheel_contents.py
     # (empty-wheel regression guard) can build real artifacts under `uv run`.
-    "hatchling>=1.29.0,<2",
+    "hatchling>=1.31.0,<2",
 ]
 
 [project.urls]

@@ -32,7 +32,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Pinned to match pyproject.toml [build-system].requires — see #1141
 # Audit (#1209): all static pip installs are pinned; dynamic Layer 2 install
 # (from pyproject.toml via tomllib) is intentionally version-spec controlled there.
-RUN pip install --no-cache-dir "hatchling==1.29.0"
+RUN pip install --no-cache-dir "hatchling==1.31.0"
 
 # Layer 2: Dependencies (invalidated only when pyproject.toml changes or EXTRAS changes)
 # Copy only pyproject.toml first so dependency installs are cached separately
