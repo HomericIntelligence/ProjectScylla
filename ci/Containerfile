@@ -25,7 +25,7 @@
 # scheme tracks uv CLI versions but pulls can 403 on rootless hosts; the
 # release tarball avoids that entirely.)
 # ============================================================================
-FROM ubuntu:24.04@sha256:c4a8d5503dfb2a3eb8ab5f807da5bc69a85730fb49b5cfca2330194ebcc41c7b AS uv
+FROM ubuntu:24.04@sha256:1e0a86e57d247923571b75e0aaf48a1449cf8c543d51fb3e07a4a7d7bfa79316 AS uv
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
@@ -39,7 +39,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certifi
 # ============================================================================
 # NOTE: docker/Dockerfile pins a different SHA256 for the same python:3.12-slim tag.
 # Both intentionally kept separate; if you update either digest, update both files together.
-FROM python:3.13-slim@sha256:6771159cd4fa5d9bba1258caf0b82e6b73458c694d178ad97c5e925c2d0e1a91 AS builder
+FROM python:3.13-slim@sha256:8fef26df932191825664e4957ff488c96dfe64918327634a357a55facbc994d3 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PIP_NO_CACHE_DIR=1 \
@@ -98,7 +98,7 @@ RUN git init . && \
 # ============================================================================
 # Stage 2: Runtime — minimal image without build tools
 # ============================================================================
-FROM python:3.13-slim@sha256:6771159cd4fa5d9bba1258caf0b82e6b73458c694d178ad97c5e925c2d0e1a91
+FROM python:3.13-slim@sha256:8fef26df932191825664e4957ff488c96dfe64918327634a357a55facbc994d3
 
 LABEL org.opencontainers.image.title="scylla-ci"
 LABEL org.opencontainers.image.description="CI container for Scylla — testing, linting, security scans"
