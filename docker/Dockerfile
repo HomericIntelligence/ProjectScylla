@@ -14,7 +14,7 @@
 # Python 3.13 aligns with pyproject.toml classifiers (3.13); requires-python = ">=3.13,<3.14"
 # NOTE: ci/Containerfile pins a different SHA256 for the same python:3.12-slim tag.
 # Both intentionally kept separate; if you update either digest, update both files together.
-FROM python:3.13-slim@sha256:6771159cd4fa5d9bba1258caf0b82e6b73458c694d178ad97c5e925c2d0e1a91 AS builder
+FROM python:3.13-slim@sha256:8fef26df932191825664e4957ff488c96dfe64918327634a357a55facbc994d3 AS builder
 
 # Set build environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -94,14 +94,14 @@ RUN pip install --user --no-cache-dir --no-deps /opt/scylla/
 # Using multi-stage copy avoids the NodeSource curl|bash pattern which
 # introduces an external dependency and pipe-to-shell security risk.
 # Digest pinned 2026-03-26: node:20-slim (see #1591; may rotate — re-pin if CI breaks)
-FROM node:20-slim@sha256:1e85773c98c31d4fe5b545e4cb17379e617b348832fb3738b22a08f68dec30f3 AS node-source
+FROM node:20-slim@sha256:3d0f05455dea2c82e2f76e7e2543964c30f6b7d673fc1a83286736d44fe4c41c AS node-source
 
 # ============================================================================
 # Stage 2: Runtime - Minimal production image
 # ============================================================================
 # Pinned to SHA256 digest for reproducibility - prevents drift from upstream updates
 # Python 3.13 aligns with pyproject.toml classifiers (3.13); requires-python = ">=3.13,<3.14"
-FROM python:3.13-slim@sha256:6771159cd4fa5d9bba1258caf0b82e6b73458c694d178ad97c5e925c2d0e1a91
+FROM python:3.13-slim@sha256:8fef26df932191825664e4957ff488c96dfe64918327634a357a55facbc994d3
 
 # Set labels for image metadata
 LABEL org.opencontainers.image.title="scylla-runner"

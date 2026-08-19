@@ -146,3 +146,18 @@ CVE-2026-56858
 CVE-2026-56859
 CVE-2026-56860
 CVE-2026-56862
+
+# GHSA-6v7p-g79w-8964: MessagePack for Python out-of-bounds read on Unpacker reuse
+# (msgpack 1.1.2, fixed 1.2.1). Introduced by the refreshed python:3.13-slim base
+# digest (#2025). CI-image tooling only: msgpack is a transitive dependency of the
+# pre-commit/markdownlint toolchain baked into the image, not runtime code and not
+# reachable from untrusted input in CI. Pin-bump tracked with the next base refresh.
+# Expires: 2026-11-19 | Reviewer: mvillmow | Category: ci-image-tooling (msgpack)
+GHSA-6v7p-g79w-8964
+
+# CVE-2025-47273: setuptools Path Traversal in sdist/wheel handling (setuptools 70.3.0,
+# fixed 78.1.1). Introduced by the refreshed python:3.13-slim base digest (#2025).
+# setuptools is build-time tooling only (pip/venv machinery); the CI image never
+# processes untrusted sdists at runtime. Bump tracked with the next base refresh.
+# Expires: 2026-11-19 | Reviewer: mvillmow | Category: ci-image-tooling (setuptools)
+CVE-2025-47273
