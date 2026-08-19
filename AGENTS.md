@@ -639,4 +639,3 @@ The shared CI/CD contract in this repository follows principles inherited from
 - **Preserve the queue (KISS).** The merge queue runs only the fast
   `merge-queue-smoke` job; heavy matrices stay on `pull_request`/push so queued
   merges do not starve the runner pool.
-
